@@ -1,0 +1,12 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="Api Key" field="apiKey">
+    <f:textbox field="apiKey" />
+  </f:entry>
+  <f:entry title="incidentKey" field="incidentKey">
+    <f:textbox field="incidentKey"/>
+  </f:entry>
+  <f:entry title="Incident Description" field="description">
+    <f:textbox field="description"/>
+  </f:entry>
+</j:jelly>
