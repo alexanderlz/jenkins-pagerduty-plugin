@@ -1,11 +1,17 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <f:entry title="Api Key" field="apiKey">
-    <f:textbox field="apiKey" />
+    <f:password field="apiKey" />
   </f:entry>
-  <f:entry title="incidentKey" field="incidentKey">
-    <f:textbox field="incidentKey"/>
-  </f:entry>
+  <f:block>
+    <table>
+      <f:optionalBlock name="existingIncident" title="Use existing Incident Key">
+        <f:entry title="incidentKey" field="incidentKey">
+          <f:textbox field="incidentKey"/>
+        </f:entry>
+      </f:optionalBlock>
+    </table>
+  </f:block>
   <f:entry title="Incident Description" field="description">
     <f:textbox field="description"/>
   </f:entry>

@@ -69,7 +69,13 @@ public class PagerDutyTrigger extends Notifier {
         listener.getLogger().printf("Triggering pagerDuty with apiKey %s%n", apiKey);
 
         try {
-            Trigger trigger = new Trigger.Builder(description).withIncidentKey(incidentKey).build();
+            Trigger trigger;
+            if (incidentKey != null && incidentKey != "") {
+                trigger = new Trigger.Builder(description).withIncidentKey(incidentKey).build();
+            } else {
+                trigger = new Trigger.Builder(description).build();
+            }
+
             NotifyResult result = pagerDuty.notify(trigger);
             listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.status());
         } catch (Exception e) {
