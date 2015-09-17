@@ -3,16 +3,13 @@
   <f:entry title="Api Key" field="apiKey">
     <f:password field="apiKey" />
   </f:entry>
-  <f:block>
-    <table>
-      <f:optionalBlock name="existingIncident" title="Use existing Incident Key">
-        <f:entry title="incidentKey" field="incidentKey">
-          <f:textbox field="incidentKey"/>
-        </f:entry>
-      </f:optionalBlock>
-    </table>
-  </f:block>
+  <f:entry title="incidentKey" field="incidentKey">
+    <f:textbox field="incidentKey"/>
+  </f:entry>
   <f:entry title="Incident Description" field="description">
-    <f:textbox field="description"/>
+     <f:textbox field="description"/>
+  </f:entry>
+  <f:entry title="Trigger Incident on SUCCESS job result" field="triggerOnSuccess">
+     <f:checkbox name="triggerOnSuccess"/>
   </f:entry>
 </j:jelly>
