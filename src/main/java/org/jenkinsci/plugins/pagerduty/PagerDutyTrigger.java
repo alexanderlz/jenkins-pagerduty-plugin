@@ -24,13 +24,15 @@ import java.io.IOException;
 public class PagerDutyTrigger extends Notifier {
 
     public final String apiKey;
+    public final boolean triggerOnSuccess;
     public final String incidentKey;
     public final String description;
     private static PagerDuty pagerDuty;
 
     @DataBoundConstructor
-    public PagerDutyTrigger(String apiKey, String incidentKey, String description) {
+    public PagerDutyTrigger(String apiKey, boolean triggerOnSuccess, String incidentKey, String description) {
         this.apiKey = apiKey;
+        this.triggerOnSuccess = triggerOnSuccess;
         this.incidentKey = incidentKey;
         this.description = description;
         pagerDuty = PagerDuty.create(apiKey);
@@ -56,9 +58,8 @@ public class PagerDutyTrigger extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws InterruptedException, IOException {
-        if (build.getResult() == Result.SUCCESS)
-            return true;
-        else {
+        if ((build.getResult() == Result.SUCCESS && triggerOnSuccess) ||
+                (build.getResult() != Result.SUCCESS && !triggerOnSuccess)) {
             listener.getLogger().println("Triggering PagerDuty Notification");
             triggerPagerDuty(listener);
         }
@@ -70,7 +71,8 @@ public class PagerDutyTrigger extends Notifier {
 
         try {
             Trigger trigger;
-            if (incidentKey != null && incidentKey != "") {
+            listener.getLogger().printf("Triggering pagerDuty with incidentKey %s%n", incidentKey);
+            if (incidentKey != null && incidentKey.length() > 0) {
                 trigger = new Trigger.Builder(description).withIncidentKey(incidentKey).build();
             } else {
                 trigger = new Trigger.Builder(description).build();
