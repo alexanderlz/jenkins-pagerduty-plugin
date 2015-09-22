@@ -9,6 +9,9 @@
   <f:entry title="Incident Description" field="description">
      <f:textbox field="description"/>
   </f:entry>
+  <f:entry title="Number of Consecutive builds before Triggering" field="numPreviousBuildsToProbe">
+     <f:textbox field="numPreviousBuildsToProbe" default="1"/>
+  </f:entry>
   <f:entry title="Trigger Incident on SUCCESS job result" field="triggerOnSuccess">
      <f:checkbox name="triggerOnSuccess"/>
   </f:entry>

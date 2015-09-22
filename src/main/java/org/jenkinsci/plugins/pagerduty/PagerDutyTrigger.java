@@ -27,16 +27,37 @@ public class PagerDutyTrigger extends Notifier {
     public final boolean triggerOnSuccess;
     public final String incidentKey;
     public final String description;
+    public final Integer numPreviousBuildsToProbe;
     private static PagerDuty pagerDuty;
 
     @DataBoundConstructor
-    public PagerDutyTrigger(String apiKey, boolean triggerOnSuccess, String incidentKey, String description) {
+    public PagerDutyTrigger(String apiKey, boolean triggerOnSuccess, String incidentKey, String description,
+                            Integer numPreviousBuildsToProbe) {
         this.apiKey = apiKey;
         this.triggerOnSuccess = triggerOnSuccess;
         this.incidentKey = incidentKey;
         this.description = description;
+        this.numPreviousBuildsToProbe = (numPreviousBuildsToProbe != null && numPreviousBuildsToProbe > 0) ? numPreviousBuildsToProbe : 1;
         pagerDuty = PagerDuty.create(apiKey);
 
+    }
+
+    /*
+     * method to verify X previous builds finished with the desired result
+     */
+    private boolean validWithPreviousResults(AbstractBuild<?, ?> build, Result desiredResult, int depth) {
+        int i=0;
+        while (i<depth && build != null) {
+            if (build.getResult() != desiredResult){
+                break;
+            }
+            i++;
+            build = build.getPreviousBuild();
+        }
+        if (i==depth) {
+            return true;
+        }
+        return false;
     }
 
     /*
@@ -58,8 +79,8 @@ public class PagerDutyTrigger extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws InterruptedException, IOException {
-        if ((build.getResult() == Result.SUCCESS && triggerOnSuccess) ||
-                (build.getResult() != Result.SUCCESS && !triggerOnSuccess)) {
+        if ((validWithPreviousResults(build, Result.SUCCESS, numPreviousBuildsToProbe) && triggerOnSuccess) ||
+                (validWithPreviousResults(build, Result.FAILURE, numPreviousBuildsToProbe) && !triggerOnSuccess)) {
             listener.getLogger().println("Triggering PagerDuty Notification");
             triggerPagerDuty(listener);
         }
