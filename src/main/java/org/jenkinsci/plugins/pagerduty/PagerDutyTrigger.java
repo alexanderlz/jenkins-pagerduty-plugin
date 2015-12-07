@@ -48,17 +48,14 @@ public class PagerDutyTrigger extends Notifier {
     /*
      * method to fetch and replace possible Environment Variables from job parameteres
      */
-    private String replaceEnvVars(String str, EnvVars envv, BuildListener ll) {
-//        List<String> allMatches = new ArrayList<String>();
+    private String replaceEnvVars(String str, EnvVars envv) {
         StringBuffer sb = new StringBuffer();
         Matcher m = Pattern.compile("\\$\\{.*\\}|\\$[^\\-\\*\\.#!, ]*")
                 .matcher(str);
         while (m.find()) {
             String v = m.group();
             v = v.replaceAll("\\$","").replaceAll("\\{","").replaceAll("\\}","");
-            ll.getLogger().println("HUUUUUUUUI  " + v);
             m.appendReplacement(sb, envv.get(v, ""));
-//            allMatches.add(m.group());
         }
         m.appendTail(sb);
         return sb.toString();
@@ -111,15 +108,17 @@ public class PagerDutyTrigger extends Notifier {
     }
 
     void triggerPagerDuty(BuildListener listener, EnvVars env) {
-        String descr = replaceEnvVars(this.description, env, listener);
-        listener.getLogger().printf("Triggering pagerDuty with apiKey %s%n", apiKey);
+        String descr = replaceEnvVars(this.description, env);
+        String apiK = replaceEnvVars(this.apiKey, env);
+        String incK = replaceEnvVars(this.incidentKey, env);
+        listener.getLogger().printf("Triggering pagerDuty with apiKey %s%n", apiK);
 
         try {
             Trigger trigger;
-            listener.getLogger().printf("Triggering pagerDuty with incidentKey %s%n", incidentKey);
+            listener.getLogger().printf("Triggering pagerDuty with incidentKey %s%n", incK);
             listener.getLogger().printf("Triggering pagerDuty with description %s%n", descr);
-            if (incidentKey != null && incidentKey.length() > 0) {
-                trigger = new Trigger.Builder(descr).withIncidentKey(incidentKey).build();
+            if (incK != null && incK.length() > 0) {
+                trigger = new Trigger.Builder(descr).withIncidentKey(incK).build();
             } else {
                 trigger = new Trigger.Builder(descr).build();
             }
@@ -128,7 +127,7 @@ public class PagerDutyTrigger extends Notifier {
             listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.status());
         } catch (Exception e) {
             e.printStackTrace(listener.error("Tried to trigger PD with apiKey = [%s]",
-                    apiKey));
+                    apiK));
         }
     }
 
