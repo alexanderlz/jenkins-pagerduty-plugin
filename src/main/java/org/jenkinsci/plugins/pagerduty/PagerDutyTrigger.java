@@ -7,6 +7,7 @@ package org.jenkinsci.plugins.pagerduty;
 import com.squareup.pagerduty.incidents.NotifyResult;
 import com.squareup.pagerduty.incidents.PagerDuty;
 import com.squareup.pagerduty.incidents.Trigger;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -20,6 +21,8 @@ import hudson.tasks.Publisher;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PagerDutyTrigger extends Notifier {
 
@@ -40,6 +43,25 @@ public class PagerDutyTrigger extends Notifier {
         this.numPreviousBuildsToProbe = (numPreviousBuildsToProbe != null && numPreviousBuildsToProbe > 0) ? numPreviousBuildsToProbe : 1;
         pagerDuty = PagerDuty.create(apiKey);
 
+    }
+
+    /*
+     * method to fetch and replace possible Environment Variables from job parameteres
+     */
+    private String replaceEnvVars(String str, EnvVars envv, BuildListener ll) {
+//        List<String> allMatches = new ArrayList<String>();
+        StringBuffer sb = new StringBuffer();
+        Matcher m = Pattern.compile("\\$\\{.*\\}|\\$[^\\-\\*\\.#!, ]*")
+                .matcher(str);
+        while (m.find()) {
+            String v = m.group();
+            v = v.replaceAll("\\$","").replaceAll("\\{","").replaceAll("\\}","");
+            ll.getLogger().println("HUUUUUUUUI  " + v);
+            m.appendReplacement(sb, envv.get(v, ""));
+//            allMatches.add(m.group());
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     /*
@@ -79,24 +101,27 @@ public class PagerDutyTrigger extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws InterruptedException, IOException {
+        EnvVars env = build.getEnvironment(listener);
         if ((validWithPreviousResults(build, Result.SUCCESS, numPreviousBuildsToProbe) && triggerOnSuccess) ||
                 (validWithPreviousResults(build, Result.FAILURE, numPreviousBuildsToProbe) && !triggerOnSuccess)) {
             listener.getLogger().println("Triggering PagerDuty Notification");
-            triggerPagerDuty(listener);
+            triggerPagerDuty(listener, env);
         }
         return true;
     }
 
-    void triggerPagerDuty(BuildListener listener) {
+    void triggerPagerDuty(BuildListener listener, EnvVars env) {
+        String descr = replaceEnvVars(this.description, env, listener);
         listener.getLogger().printf("Triggering pagerDuty with apiKey %s%n", apiKey);
 
         try {
             Trigger trigger;
             listener.getLogger().printf("Triggering pagerDuty with incidentKey %s%n", incidentKey);
+            listener.getLogger().printf("Triggering pagerDuty with description %s%n", descr);
             if (incidentKey != null && incidentKey.length() > 0) {
-                trigger = new Trigger.Builder(description).withIncidentKey(incidentKey).build();
+                trigger = new Trigger.Builder(descr).withIncidentKey(incidentKey).build();
             } else {
-                trigger = new Trigger.Builder(description).build();
+                trigger = new Trigger.Builder(descr).build();
             }
 
             NotifyResult result = pagerDuty.notify(trigger);
