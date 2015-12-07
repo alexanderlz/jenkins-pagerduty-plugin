@@ -10,36 +10,31 @@
     <version>1.580.1</version>
     <relativePath/>
   </parent>
-  <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>pagerduty</artifactId>
-  <version>0.1.3-SNAPSHOT</version>
+  <version>0.2.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <name>PagerDuty Plugin</name>
   <description>PagerDuty incident Trigger plugin</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin</url>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/PagerDuty+Plugin</url>
   <licenses>
     <license>
       <name>MIT License</name>
       <url>http://opensource.org/licenses/MIT</url>
     </license>
   </licenses>
-  <!-- If you want this to appear on the wiki page:
   <developers>
     <developer>
       <id>alexanderlz</id>
       <name>Alexander Leibzon</name>
-      <email>alexander@leizon.com</email>
+      <email>alexander@leibzon.com</email>
     </developer>
   </developers>
-  -->
-  <!-- Assuming you want to host on @jenkinsci:
   <scm>
-    <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-    <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    <connection>scm:git:git://github.com/jenkinsci/pagerduty-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/pagerduty-plugin.git</developerConnection>
+    <url>http://github.com/jenkinsci/pagerduty-plugin</url>
   </scm>
-   -->
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
