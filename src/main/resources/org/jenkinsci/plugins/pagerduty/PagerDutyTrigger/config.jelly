@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="Api Key" field="apiKey">
-    <f:password field="apiKey" />
+  <f:entry title="Service Integration Key" field="serviceKey">
+    <f:password field="serviceKey" />
   </f:entry>
   <f:entry title="incidentKey" field="incidentKey">
     <f:textbox field="incidentKey"/>
@@ -14,5 +14,17 @@
   </f:entry>
   <f:entry title="Trigger Incident on SUCCESS job result" field="triggerOnSuccess">
      <f:checkbox name="triggerOnSuccess"/>
+  </f:entry>
+  <f:entry title="Trigger Incident on FAILURE job result" field="triggerOnFailure">
+     <f:checkbox name="triggerOnFailure"/>
+  </f:entry>
+  <f:entry title="Trigger Incident on UNSTABLE job result" field="triggerOnUnstable">
+     <f:checkbox name="triggerOnUnstable"/>
+  </f:entry>
+  <f:entry title="Trigger Incident on ABORTED job result" field="triggerOnAborted">
+     <f:checkbox name="triggerOnAborted"/>
+  </f:entry>
+  <f:entry title="Trigger Incident on NOT_BUILT job result" field="triggerOnNotBuilt">
+     <f:checkbox name="triggerOnNotBuilt"/>
   </f:entry>
 </j:jelly>

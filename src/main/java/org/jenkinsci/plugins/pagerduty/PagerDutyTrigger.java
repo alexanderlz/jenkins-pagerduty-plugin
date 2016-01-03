@@ -21,28 +21,58 @@ import hudson.tasks.Publisher;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PagerDutyTrigger extends Notifier {
 
-    public final String apiKey;
-    public final boolean triggerOnSuccess;
-    public final String incidentKey;
-    public final String description;
-    public final Integer numPreviousBuildsToProbe;
-    private static PagerDuty pagerDuty;
+    public String serviceKey;
+    public boolean triggerOnSuccess;
+    public boolean triggerOnFailure;
+    public boolean triggerOnUnstable;
+    public boolean triggerOnAborted;
+    public boolean triggerOnNotBuilt;
+    public String incidentKey;
+    public String description;
+    public Integer numPreviousBuildsToProbe;
+    private PagerDuty pagerDuty = null;
+    private LinkedList<Result> resultProbe;
+    public static final String DEFAULT_DESCRIPTION_STRING = "I was too lazy to create a description, but trust me it's important!";
 
     @DataBoundConstructor
-    public PagerDutyTrigger(String apiKey, boolean triggerOnSuccess, String incidentKey, String description,
+    public PagerDutyTrigger(String serviceKey, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnAborted,
+                            boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String description,
                             Integer numPreviousBuildsToProbe) {
-        this.apiKey = apiKey;
+        this.serviceKey = serviceKey;
         this.triggerOnSuccess = triggerOnSuccess;
+        this.triggerOnFailure = triggerOnFailure;
+        this.triggerOnUnstable = triggerOnUnstable;
+        this.triggerOnAborted = triggerOnAborted;
+        this.triggerOnNotBuilt = triggerOnNotBuilt;
         this.incidentKey = incidentKey;
         this.description = description;
         this.numPreviousBuildsToProbe = (numPreviousBuildsToProbe != null && numPreviousBuildsToProbe > 0) ? numPreviousBuildsToProbe : 1;
-        pagerDuty = PagerDuty.create(apiKey);
+        if(this.serviceKey != null && this.serviceKey.trim().length() > 0)
+            this.pagerDuty = PagerDuty.create(serviceKey);
+        this.resultProbe = generateResultProbe();
 
+    }
+
+    private LinkedList<Result> generateResultProbe() {
+        LinkedList<Result> res = new LinkedList<Result>();
+        if(triggerOnSuccess)
+            res.add(Result.SUCCESS);
+        if(triggerOnFailure)
+            res.add(Result.FAILURE);
+        if(triggerOnUnstable)
+            res.add(Result.UNSTABLE);
+        if(triggerOnAborted)
+            res.add(Result.ABORTED);
+        if(triggerOnNotBuilt)
+            res.add(Result.NOT_BUILT);
+        return res;
     }
 
     /*
@@ -50,11 +80,13 @@ public class PagerDutyTrigger extends Notifier {
      */
     private String replaceEnvVars(String str, EnvVars envv) {
         StringBuffer sb = new StringBuffer();
+        if (str == null || str.trim().length() < 1)
+            str = DEFAULT_DESCRIPTION_STRING;
         Matcher m = Pattern.compile("\\$\\{.*\\}|\\$[^\\-\\*\\.#!, ]*")
                 .matcher(str);
         while (m.find()) {
             String v = m.group();
-            v = v.replaceAll("\\$","").replaceAll("\\{","").replaceAll("\\}","");
+            v = v.replaceAll("\\$", "").replaceAll("\\{", "").replaceAll("\\}", "");
             m.appendReplacement(sb, envv.get(v, ""));
         }
         m.appendTail(sb);
@@ -64,16 +96,16 @@ public class PagerDutyTrigger extends Notifier {
     /*
      * method to verify X previous builds finished with the desired result
      */
-    private boolean validWithPreviousResults(AbstractBuild<?, ?> build, Result desiredResult, int depth) {
-        int i=0;
-        while (i<depth && build != null) {
-            if (build.getResult() != desiredResult){
+    private boolean validWithPreviousResults(AbstractBuild<?, ?> build, List<Result> desiredResultList, int depth) {
+        int i = 0;
+        while (i < depth && build != null) {
+            if (!desiredResultList.contains(build.getResult())) {
                 break;
             }
             i++;
             build = build.getPreviousBuild();
         }
-        if (i==depth) {
+        if (i == depth) {
             return true;
         }
         return false;
@@ -98,9 +130,12 @@ public class PagerDutyTrigger extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws InterruptedException, IOException {
+        if (pagerDuty == null) {
+            listener.getLogger().println("Unbale to activate pagerduty module, check configuration!");
+            return false;
+        }
         EnvVars env = build.getEnvironment(listener);
-        if ((validWithPreviousResults(build, Result.SUCCESS, numPreviousBuildsToProbe) && triggerOnSuccess) ||
-                (validWithPreviousResults(build, Result.FAILURE, numPreviousBuildsToProbe) && !triggerOnSuccess)) {
+        if (validWithPreviousResults(build, resultProbe, numPreviousBuildsToProbe)) {
             listener.getLogger().println("Triggering PagerDuty Notification");
             triggerPagerDuty(listener, env);
         }
@@ -109,9 +144,9 @@ public class PagerDutyTrigger extends Notifier {
 
     void triggerPagerDuty(BuildListener listener, EnvVars env) {
         String descr = replaceEnvVars(this.description, env);
-        String apiK = replaceEnvVars(this.apiKey, env);
+        String serviceK = replaceEnvVars(this.serviceKey, env);
         String incK = replaceEnvVars(this.incidentKey, env);
-        listener.getLogger().printf("Triggering pagerDuty with apiKey %s%n", apiK);
+        listener.getLogger().printf("Triggering pagerDuty with serviceKey %s%n", serviceK);
 
         try {
             Trigger trigger;
@@ -127,7 +162,7 @@ public class PagerDutyTrigger extends Notifier {
             listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.status());
         } catch (Exception e) {
             e.printStackTrace(listener.error("Tried to trigger PD with apiKey = [%s]",
-                    apiK));
+                    serviceK));
         }
     }
 
