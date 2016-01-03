@@ -10,7 +10,7 @@
     <relativePath />
   </parent>
   <artifactId>pagerduty</artifactId>
-  <version>0.2.2-SNAPSHOT</version>
+  <version>0.2.2</version>
   <packaging>hpi</packaging>
 
   <name>PagerDuty Plugin</name>
@@ -33,7 +33,7 @@
     <connection>scm:git:git://github.com/jenkinsci/pagerduty-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/pagerduty-plugin.git</developerConnection>
     <url>http://github.com/jenkinsci/pagerduty-plugin</url>
-    <tag>HEAD</tag>
+    <tag>pagerduty-0.2.2</tag>
   </scm>
   <repositories>
     <repository>
