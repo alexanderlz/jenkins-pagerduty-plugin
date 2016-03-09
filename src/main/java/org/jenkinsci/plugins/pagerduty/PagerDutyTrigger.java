@@ -10,41 +10,88 @@ import com.squareup.pagerduty.incidents.Trigger;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PagerDutyTrigger extends Notifier {
+public class PagerDutyTrigger extends Notifier{
 
-    public String serviceKey;
-    public boolean triggerOnSuccess;
-    public boolean triggerOnFailure;
-    public boolean triggerOnUnstable;
-    public boolean triggerOnAborted;
-    public boolean triggerOnNotBuilt;
-    public String incidentKey;
-    public String description;
-    public Integer numPreviousBuildsToProbe;
-    private PagerDuty pagerDuty = null;
-    private LinkedList<Result> resultProbe;
-    public static final String DEFAULT_DESCRIPTION_STRING = "I was too lazy to create a description, but trust me it's important!";
+
+//    private static final Logger LOGG = Logger.getLogger(PagerDutyTrigger.class.getName());
+    private static final String DEFAULT_DESCRIPTION_STRING = "I was too lazy to create a incDescription, but trust me it's important!";
+
+    public  String serviceKey;
+    public  boolean triggerOnSuccess;
+    public  boolean triggerOnFailure;
+    public  boolean triggerOnUnstable;
+    public  boolean triggerOnAborted;
+    public  boolean triggerOnNotBuilt;
+    public  String incidentKey;
+    public  String incDescription;
+    public  Integer numPreviousBuildsToProbe;
+
+    public String getServiceKey() {
+        return serviceKey;
+    }
+
+    public boolean isTriggerOnSuccess() {
+        return triggerOnSuccess;
+    }
+
+    public boolean isTriggerOnFailure() {
+        return triggerOnFailure;
+    }
+
+    public boolean isTriggerOnUnstable() {
+        return triggerOnUnstable;
+    }
+
+    public boolean isTriggerOnAborted() {
+        return triggerOnAborted;
+    }
+
+    public boolean isTriggerOnNotBuilt() {
+        return triggerOnNotBuilt;
+    }
+
+    public String getIncidentKey() {
+        return incidentKey;
+    }
+
+    public String getIncDescription() {
+        return incDescription;
+    }
+
+    public Integer getNumPreviousBuildsToProbe() {
+        return numPreviousBuildsToProbe;
+    }
+
+    protected Object readResolve() {
+//        this.getDescriptor().load();
+        return this;
+    }
+
+    @Override
+    public DescriptorImpl getDescriptor(){
+        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+    }
 
     @DataBoundConstructor
     public PagerDutyTrigger(String serviceKey, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnAborted,
-                            boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String description,
+                            boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String incDescription,
                             Integer numPreviousBuildsToProbe) {
+        super();
         this.serviceKey = serviceKey;
         this.triggerOnSuccess = triggerOnSuccess;
         this.triggerOnFailure = triggerOnFailure;
@@ -52,12 +99,8 @@ public class PagerDutyTrigger extends Notifier {
         this.triggerOnAborted = triggerOnAborted;
         this.triggerOnNotBuilt = triggerOnNotBuilt;
         this.incidentKey = incidentKey;
-        this.description = description;
+        this.incDescription = incDescription;
         this.numPreviousBuildsToProbe = (numPreviousBuildsToProbe != null && numPreviousBuildsToProbe > 0) ? numPreviousBuildsToProbe : 1;
-        if(this.serviceKey != null && this.serviceKey.trim().length() > 0)
-            this.pagerDuty = PagerDuty.create(serviceKey);
-        this.resultProbe = generateResultProbe();
-
     }
 
     private LinkedList<Result> generateResultProbe() {
@@ -130,20 +173,28 @@ public class PagerDutyTrigger extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws InterruptedException, IOException {
-        if (pagerDuty == null) {
-            listener.getLogger().println("Unbale to activate pagerduty module, check configuration!");
-            return false;
-        }
+        PagerDuty pagerDuty = null;
+        LinkedList<Result> resultProbe = generateResultProbe();
+
         EnvVars env = build.getEnvironment(listener);
         if (validWithPreviousResults(build, resultProbe, numPreviousBuildsToProbe)) {
             listener.getLogger().println("Triggering PagerDuty Notification");
-            triggerPagerDuty(listener, env);
+            return triggerPagerDuty(listener, env, pagerDuty);
         }
         return true;
     }
 
-    void triggerPagerDuty(BuildListener listener, EnvVars env) {
-        String descr = replaceEnvVars(this.description, env);
+    private boolean triggerPagerDuty(BuildListener listener, EnvVars env, PagerDuty pagerDuty) {
+
+        if(this.serviceKey != null && this.serviceKey.trim().length() > 0)
+            pagerDuty = PagerDuty.create(serviceKey);
+
+        if (pagerDuty == null) {
+            listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
+            return false;
+        }
+
+        String descr = replaceEnvVars(this.incDescription, env);
         String serviceK = replaceEnvVars(this.serviceKey, env);
         String incK = replaceEnvVars(this.incidentKey, env);
         listener.getLogger().printf("Triggering pagerDuty with serviceKey %s%n", serviceK);
@@ -151,7 +202,7 @@ public class PagerDutyTrigger extends Notifier {
         try {
             Trigger trigger;
             listener.getLogger().printf("Triggering pagerDuty with incidentKey %s%n", incK);
-            listener.getLogger().printf("Triggering pagerDuty with description %s%n", descr);
+            listener.getLogger().printf("Triggering pagerDuty with incDescription %s%n", descr);
             if (incK != null && incK.length() > 0) {
                 trigger = new Trigger.Builder(descr).withIncidentKey(incK).build();
             } else {
@@ -163,7 +214,9 @@ public class PagerDutyTrigger extends Notifier {
         } catch (Exception e) {
             e.printStackTrace(listener.error("Tried to trigger PD with apiKey = [%s]",
                     serviceK));
+            return false;
         }
+        return true;
     }
 
     @Extension
