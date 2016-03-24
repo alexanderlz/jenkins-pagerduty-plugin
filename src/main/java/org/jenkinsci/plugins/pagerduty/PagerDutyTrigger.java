@@ -6,6 +6,7 @@ package org.jenkinsci.plugins.pagerduty;
 
 import com.squareup.pagerduty.incidents.NotifyResult;
 import com.squareup.pagerduty.incidents.PagerDuty;
+import com.squareup.pagerduty.incidents.Resolution;
 import com.squareup.pagerduty.incidents.Trigger;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -28,10 +29,16 @@ import java.util.regex.Pattern;
 public class PagerDutyTrigger extends Notifier{
 
 
+    private enum ValidationResult {
+        DO_NOTHING, DO_TRIGGER, DO_RESOLVE
+    }
+
 //    private static final Logger LOGG = Logger.getLogger(PagerDutyTrigger.class.getName());
-    private static final String DEFAULT_DESCRIPTION_STRING = "I was too lazy to create a incDescription, but trust me it's important!";
+    private static final String DEFAULT_DESCRIPTION_STRING = "I was too lazy to create a description, but trust me it's important!";
 
     public  String serviceKey;
+
+    public  boolean resolveOnBackToNormal;
     public  boolean triggerOnSuccess;
     public  boolean triggerOnFailure;
     public  boolean triggerOnUnstable;
@@ -40,6 +47,10 @@ public class PagerDutyTrigger extends Notifier{
     public  String incidentKey;
     public  String incDescription;
     public  Integer numPreviousBuildsToProbe;
+
+    public boolean isResolveOnBackToNormal() { return resolveOnBackToNormal; }
+
+    public void setResolveOnBackToNormal(boolean resolveOnBackToNormal) { this.resolveOnBackToNormal = resolveOnBackToNormal; }
 
     public String getServiceKey() {
         return serviceKey;
@@ -88,11 +99,12 @@ public class PagerDutyTrigger extends Notifier{
     }
 
     @DataBoundConstructor
-    public PagerDutyTrigger(String serviceKey, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnAborted,
+    public PagerDutyTrigger(String serviceKey,boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnAborted,
                             boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String incDescription,
                             Integer numPreviousBuildsToProbe) {
         super();
         this.serviceKey = serviceKey;
+        this.resolveOnBackToNormal = resolveOnBackToNormal;
         this.triggerOnSuccess = triggerOnSuccess;
         this.triggerOnFailure = triggerOnFailure;
         this.triggerOnUnstable = triggerOnUnstable;
@@ -121,10 +133,13 @@ public class PagerDutyTrigger extends Notifier{
     /*
      * method to fetch and replace possible Environment Variables from job parameteres
      */
-    private String replaceEnvVars(String str, EnvVars envv) {
+    private String replaceEnvVars(String str, EnvVars envv, String defaultString) {
         StringBuffer sb = new StringBuffer();
-        if (str == null || str.trim().length() < 1)
-            str = DEFAULT_DESCRIPTION_STRING;
+        if (str == null || str.trim().length() < 1) {
+            if (defaultString == null)
+                return null;
+            str = defaultString;
+        }
         Matcher m = Pattern.compile("\\$\\{.*\\}|\\$[^\\-\\*\\.#!, ]*")
                 .matcher(str);
         while (m.find()) {
@@ -139,19 +154,25 @@ public class PagerDutyTrigger extends Notifier{
     /*
      * method to verify X previous builds finished with the desired result
      */
-    private boolean validWithPreviousResults(AbstractBuild<?, ?> build, List<Result> desiredResultList, int depth) {
+    private ValidationResult validWithPreviousResults(AbstractBuild<?, ?> build, List<Result> desiredResultList, int depth) {
         int i = 0;
-        while (i < depth && build != null) {
-            if (!desiredResultList.contains(build.getResult())) {
-                break;
+        if (this.resolveOnBackToNormal && build != null && Result.SUCCESS.equals(build.getResult())) {
+            AbstractBuild<?, ?> previousBuild = build.getPreviousBuild();
+            if (previousBuild != null && !Result.SUCCESS.equals(previousBuild.getResult()))
+                return ValidationResult.DO_RESOLVE;
+        }else {
+            while (i < depth && build != null) {
+                if (!desiredResultList.contains(build.getResult())) {
+                    break;
+                }
+                i++;
+                build = build.getPreviousBuild();
             }
-            i++;
-            build = build.getPreviousBuild();
+            if (i == depth) {
+                return ValidationResult.DO_TRIGGER;
+            }
         }
-        if (i == depth) {
-            return true;
-        }
-        return false;
+        return ValidationResult.DO_NOTHING;
     }
 
     /*
@@ -177,40 +198,66 @@ public class PagerDutyTrigger extends Notifier{
         LinkedList<Result> resultProbe = generateResultProbe();
 
         EnvVars env = build.getEnvironment(listener);
-        if (validWithPreviousResults(build, resultProbe, numPreviousBuildsToProbe)) {
-            listener.getLogger().println("Triggering PagerDuty Notification");
-            return triggerPagerDuty(listener, env, pagerDuty);
+        ValidationResult validationResult = validWithPreviousResults(build, resultProbe, numPreviousBuildsToProbe);
+        if (validationResult != ValidationResult.DO_NOTHING ) {
+
+            if(this.serviceKey != null && this.serviceKey.trim().length() > 0)
+                pagerDuty = PagerDuty.create(serviceKey);
+
+            if (validationResult == ValidationResult.DO_TRIGGER) {
+                listener.getLogger().println("Triggering PagerDuty Notification");
+                return triggerPagerDuty(listener, env, pagerDuty);
+            }else if (validationResult == ValidationResult.DO_RESOLVE){
+                listener.getLogger().println("Resolving incident");
+                return resolveIncident(pagerDuty);
+            }
         }
         return true;
     }
 
-    private boolean triggerPagerDuty(BuildListener listener, EnvVars env, PagerDuty pagerDuty) {
+    private boolean resolveIncident(PagerDuty pagerDuty) {
+        Resolution resolution = new Resolution.Builder(this.incidentKey)
+                .withDescription("Automatically Back to normal")
+                .addDetails("Foo", "Bar")
+                .build();
+        pagerDuty.notify(resolution);
+        return true;
+    }
 
-        if(this.serviceKey != null && this.serviceKey.trim().length() > 0)
-            pagerDuty = PagerDuty.create(serviceKey);
+    private boolean triggerPagerDuty(BuildListener listener, EnvVars env, PagerDuty pagerDuty) {
 
         if (pagerDuty == null) {
             listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
             return false;
         }
 
-        String descr = replaceEnvVars(this.incDescription, env);
-        String serviceK = replaceEnvVars(this.serviceKey, env);
-        String incK = replaceEnvVars(this.incidentKey, env);
+        String descr = replaceEnvVars(this.incDescription, env, DEFAULT_DESCRIPTION_STRING);
+        String serviceK = replaceEnvVars(this.serviceKey, env, null);
+        String incK = replaceEnvVars(this.incidentKey, env, null);
+        boolean hasIncidentKey = false;
+
+        if (incK != null && incK.length() > 0) {
+            hasIncidentKey = true;
+        }
+
         listener.getLogger().printf("Triggering pagerDuty with serviceKey %s%n", serviceK);
 
         try {
             Trigger trigger;
             listener.getLogger().printf("Triggering pagerDuty with incidentKey %s%n", incK);
             listener.getLogger().printf("Triggering pagerDuty with incDescription %s%n", descr);
-            if (incK != null && incK.length() > 0) {
+            if (hasIncidentKey) {
                 trigger = new Trigger.Builder(descr).withIncidentKey(incK).build();
             } else {
                 trigger = new Trigger.Builder(descr).build();
             }
 
             NotifyResult result = pagerDuty.notify(trigger);
+            if (!hasIncidentKey) {
+                this.incidentKey = result.incidentKey();
+            }
             listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.status());
+            listener.getLogger().printf("PagerDuty IncidentKey: %s%n", this.incidentKey);
         } catch (Exception e) {
             e.printStackTrace(listener.error("Tried to trigger PD with apiKey = [%s]",
                     serviceK));
