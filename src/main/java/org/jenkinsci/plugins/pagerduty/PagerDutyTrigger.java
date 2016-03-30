@@ -20,6 +20,7 @@ import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -209,18 +210,24 @@ public class PagerDutyTrigger extends Notifier{
                 return triggerPagerDuty(listener, env, pagerDuty);
             }else if (validationResult == ValidationResult.DO_RESOLVE){
                 listener.getLogger().println("Resolving incident");
-                return resolveIncident(pagerDuty);
+                return resolveIncident(pagerDuty, listener.getLogger());
             }
         }
         return true;
     }
 
-    private boolean resolveIncident(PagerDuty pagerDuty) {
+    private boolean resolveIncident(PagerDuty pagerDuty, PrintStream logger) {
         Resolution resolution = new Resolution.Builder(this.incidentKey)
                 .withDescription("Automatically Back to normal")
-                .addDetails("Foo", "Bar")
                 .build();
-        pagerDuty.notify(resolution);
+        try{
+            NotifyResult result = pagerDuty.notify(resolution);
+            logger.println("Finished resolving - " + result.status());
+        } catch (IOException e){
+            logger.println("Error while trying to resolve ");
+            logger.println(e.getMessage());
+            return false;
+        }
         return true;
     }
 
