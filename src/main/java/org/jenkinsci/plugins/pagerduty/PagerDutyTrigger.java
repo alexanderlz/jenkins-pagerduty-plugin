@@ -141,7 +141,7 @@ public class PagerDutyTrigger extends Notifier{
                 return null;
             str = defaultString;
         }
-        Matcher m = Pattern.compile("\\$\\{.*\\}|\\$[^\\-\\*\\.#!, ]*")
+        Matcher m = Pattern.compile("\\$\\{.*?\\}|\\$[^\\-\\*\\.#!, ]*")
                 .matcher(str);
         while (m.find()) {
             String v = m.group();
