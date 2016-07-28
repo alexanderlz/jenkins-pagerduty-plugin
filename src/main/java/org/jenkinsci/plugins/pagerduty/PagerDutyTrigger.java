@@ -266,7 +266,7 @@ public class PagerDutyTrigger extends Notifier{
             listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.status());
             listener.getLogger().printf("PagerDuty IncidentKey: %s%n", this.incidentKey);
         } catch (Exception e) {
-            e.printStackTrace(listener.error("Tried to trigger PD with apiKey = [%s]",
+            e.printStackTrace(listener.error("Tried to trigger PD with serviceKey = [%s]",
                     serviceK));
             return false;
         }
