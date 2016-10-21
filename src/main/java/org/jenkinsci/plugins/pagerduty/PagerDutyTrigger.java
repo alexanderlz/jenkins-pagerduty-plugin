@@ -222,7 +222,11 @@ public class PagerDutyTrigger extends Notifier{
                 .build();
         try{
             NotifyResult result = pagerDuty.notify(resolution);
-            logger.println("Finished resolving - " + result.status());
+            if (result != null) {
+                logger.println("Finished resolving - " + result.status());
+            } else {
+                logger.println("Attempt to resolve the incident returned null - Incident may already be closed or may not exist.");
+            }
         } catch (IOException e){
             logger.println("Error while trying to resolve ");
             logger.println(e.getMessage());
