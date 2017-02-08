@@ -264,11 +264,15 @@ public class PagerDutyTrigger extends Notifier{
             }
 
             NotifyResult result = pagerDuty.notify(trigger);
-            if (!hasIncidentKey) {
-                this.incidentKey = result.incidentKey();
+            if (result != null) {
+                if (!hasIncidentKey) {
+                    this.incidentKey = result.incidentKey();
+                }
+                listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.status());
+                listener.getLogger().printf("PagerDuty IncidentKey: %s%n", this.incidentKey);
+            } else {
+                listener.getLogger().printf("PagerDuty returned NULL. check network or PD settings!");
             }
-            listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.status());
-            listener.getLogger().printf("PagerDuty IncidentKey: %s%n", this.incidentKey);
         } catch (Exception e) {
             e.printStackTrace(listener.error("Tried to trigger PD with serviceKey = [%s]",
                     serviceK));
