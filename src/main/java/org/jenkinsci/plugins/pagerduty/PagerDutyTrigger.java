@@ -96,7 +96,8 @@ public class PagerDutyTrigger extends Notifier{
 
     @Override
     public DescriptorImpl getDescriptor(){
-        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+        Jenkins j = Jenkins.getInstance();
+        return (j != null)?j.getDescriptorByType(DescriptorImpl.class):null;
     }
 
     @DataBoundConstructor
