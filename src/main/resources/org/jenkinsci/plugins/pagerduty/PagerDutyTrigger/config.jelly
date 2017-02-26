@@ -10,6 +10,9 @@
   <f:entry title="Incident Description" field="incDescription">
      <f:textbox />
   </f:entry>
+  <f:entry title="Incident Details" field="incDetails">
+     <f:textbox />
+  </f:entry>
   <f:entry title="Number of Consecutive builds before Triggering" field="numPreviousBuildsToProbe">
      <f:textbox default="1"/>
   </f:entry>
