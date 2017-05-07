@@ -34,7 +34,6 @@ public class PagerDutyTrigger extends Notifier{
         DO_NOTHING, DO_TRIGGER, DO_RESOLVE
     }
 
-//    private static final Logger LOGG = Logger.getLogger(PagerDutyTrigger.class.getName());
     private static final String DEFAULT_DESCRIPTION_STRING = "I was too lazy to create a description, but trust me it's important!";
 
     public  String serviceKey;
@@ -47,6 +46,7 @@ public class PagerDutyTrigger extends Notifier{
     public  boolean triggerOnNotBuilt;
     public  String incidentKey;
     public  String incDescription;
+    public  String incDetails;
     public  Integer numPreviousBuildsToProbe;
 
     public boolean isResolveOnBackToNormal() { return resolveOnBackToNormal; }
@@ -85,6 +85,10 @@ public class PagerDutyTrigger extends Notifier{
         return incDescription;
     }
 
+    public String getIncDetails() {
+        return incDetails;
+    }
+
     public Integer getNumPreviousBuildsToProbe() {
         return numPreviousBuildsToProbe;
     }
@@ -102,7 +106,7 @@ public class PagerDutyTrigger extends Notifier{
 
     @DataBoundConstructor
     public PagerDutyTrigger(String serviceKey,boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnAborted,
-                            boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String incDescription,
+                            boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String incDescription, String incDetails,
                             Integer numPreviousBuildsToProbe) {
         super();
         this.serviceKey = serviceKey;
@@ -114,6 +118,7 @@ public class PagerDutyTrigger extends Notifier{
         this.triggerOnNotBuilt = triggerOnNotBuilt;
         this.incidentKey = incidentKey;
         this.incDescription = incDescription;
+        this.incDetails = incDetails;
         this.numPreviousBuildsToProbe = (numPreviousBuildsToProbe != null && numPreviousBuildsToProbe > 0) ? numPreviousBuildsToProbe : 1;
     }
 
@@ -251,6 +256,7 @@ public class PagerDutyTrigger extends Notifier{
         String descr = replaceEnvVars(this.incDescription, env, DEFAULT_DESCRIPTION_STRING);
         String serviceK = replaceEnvVars(this.serviceKey, env, null);
         String incK = replaceEnvVars(this.incidentKey, env, null);
+        String details = replaceEnvVars(this.incDetails, env, null);
         boolean hasIncidentKey = false;
 
         if (incK != null && incK.length() > 0) {
@@ -263,10 +269,11 @@ public class PagerDutyTrigger extends Notifier{
             Trigger trigger;
             listener.getLogger().printf("Triggering pagerDuty with incidentKey %s%n", incK);
             listener.getLogger().printf("Triggering pagerDuty with incDescription %s%n", descr);
+            listener.getLogger().printf("Triggering pagerDuty with incDetails %s%n", details);
             if (hasIncidentKey) {
-                trigger = new Trigger.Builder(descr).withIncidentKey(incK).build();
+                trigger = new Trigger.Builder(descr).addDetails("Details", details).withIncidentKey(incK).build();
             } else {
-                trigger = new Trigger.Builder(descr).build();
+                trigger = new Trigger.Builder(descr).addDetails("Details", details).build();
             }
 
             NotifyResult result = pagerDuty.notify(trigger);
