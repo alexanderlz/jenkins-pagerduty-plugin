@@ -218,20 +218,25 @@ public class PagerDutyTrigger extends Notifier{
     }
 
     private boolean resolveIncident(PagerDuty pagerDuty, PrintStream logger) {
-        Resolution resolution = new Resolution.Builder(this.incidentKey)
-                .withDescription("Automatically Back to normal")
-                .build();
-        try{
-            NotifyResult result = pagerDuty.notify(resolution);
-            if (result != null) {
-                logger.println("Finished resolving - " + result.status());
-            } else {
-                logger.println("Attempt to resolve the incident returned null - Incident may already be closed or may not exist.");
+        if(this.incidentKey != null && this.incidentKey.trim().length() > 0) {
+            Resolution resolution = new Resolution.Builder(this.incidentKey)
+                    .withDescription("Automatically Back to normal")
+                    .build();
+            try {
+                NotifyResult result = pagerDuty.notify(resolution);
+                if (result != null) {
+                    logger.println("Finished resolving - " + result.status());
+                } else {
+                    logger.println("Attempt to resolve the incident returned null - Incident may already be closed or may not exist.");
+                }
+            } catch (IOException e) {
+                logger.println("Error while trying to resolve ");
+                logger.println(e.getMessage());
+                return false;
             }
-        } catch (IOException e){
-            logger.println("Error while trying to resolve ");
-            logger.println(e.getMessage());
-            return false;
+        }
+        else{
+            logger.println("incidentKey not provided, nothing to resolve. (check previous builds for further clues)");
         }
         return true;
     }
