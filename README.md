@@ -15,3 +15,5 @@ $ mvn clean package
 
 then upload the hpi file to jenkins
 
+
+[![Gitter](https://badges.gitter.im/jenkinsci/pagerduty-plugin.svg)](https://gitter.im/jenkinsci/pagerduty-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
