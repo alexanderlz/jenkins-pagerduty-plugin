@@ -10,7 +10,7 @@
         <relativePath />
     </parent>
     <artifactId>pagerduty</artifactId>
-    <version>0.2.7-SNAPSHOT</version>
+    <version>0.3.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <properties>
@@ -194,6 +194,11 @@
             <artifactId>jetty-io</artifactId>
             <version>${jetty.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-step-api</artifactId>
+            <version>1.11</version>
         </dependency>
 
     </dependencies>
