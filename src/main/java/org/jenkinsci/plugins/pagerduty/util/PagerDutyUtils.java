@@ -43,14 +43,14 @@ public class PagerDutyUtils {
     }
 
 
-    public static boolean resolveIncident(String serviceKey, String incidentKey, EnvVars envv, TaskListener listener) {
+    public static boolean resolveIncident(PagerDutyParamHolder pdparams, EnvVars envv, TaskListener listener) {
         PagerDutyEventsClient pagerDuty = PagerDutyEventsClient.create();
         if (pagerDuty == null) {
 //            listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
             return false;
         }
-        if (incidentKey != null && incidentKey.trim().length() > 0) {
-            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(serviceKey, incidentKey);
+        if (pdparams.getIncidentKey() != null && pdparams.getIncidentKey().trim().length() > 0) {
+            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(pdparams.getServiceKey(), pdparams.getIncidentKey());
             resolveIncidentBuilder.details(DEFAULT_RESOLVE_STR).description(DEFAULT_RESOLVE_DESC);
 
             ResolveIncident resolveIncident = resolveIncidentBuilder.build();

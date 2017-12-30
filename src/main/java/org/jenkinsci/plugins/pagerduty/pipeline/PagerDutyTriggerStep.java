@@ -4,18 +4,10 @@ package org.jenkinsci.plugins.pagerduty.pipeline;
  * Created by alex on 09/07/17.
  */
 
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
-import hudson.Util;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
-import jenkins.model.Messages;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
-import net.sf.json.groovy.JsonSlurper;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
 import org.jenkinsci.plugins.pagerduty.PagerDutyTrigger;
 import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
@@ -47,9 +39,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private boolean isResolve;
     private String incidentKey;
     private String incDescription;
-
     private String incDetails;
-
     public boolean isResolve() {
         return isResolve;
     }
@@ -100,7 +90,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "pagerdutyTrigger";
+            return "pagerdutyCall";
         }
 
         @Override
@@ -134,69 +124,14 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.serviceKey, step.incidentKey, step.incDescription, step.incDetails);
 
             EnvVars envVars = null;
-            PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
-
- /*           fdlkmhdfkjhdfkjhdf
-            listener.getLogger().println("triggering pagerduty with servicekey :" + step.serviceKey + ", details:" + step.getIncDetails());
-            String baseUrl = step.baseUrl != null ? step.baseUrl : slackDesc.getBaseUrl();
-            String team = step.teamDomain != null ? step.teamDomain : slackDesc.getTeamDomain();
-            String tokenCredentialId = step.tokenCredentialId != null ? step.tokenCredentialId : slackDesc.getTokenCredentialId();
-            String token;
-            boolean botUser;
-            if (step.token != null) {
-                token = step.token;
-                botUser = step.botUser;
+            if (step.isResolve()){
+                PagerDutyUtils.resolveIncident(pdparams, envVars, listener);
             } else {
-                token = slackDesc.getToken();
-                botUser = slackDesc.getBotUser();
+                PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
             }
-            String channel = step.channel != null ? step.channel : slackDesc.getRoom();
-            String color = step.color != null ? step.color : "";
 
-            //placing in console log to simplify testing of retrieving values from global config or from step field; also used for tests
-            listener.getLogger().println(Messages.SlackSendStepConfig(step.baseUrl == null, step.teamDomain == null, step.token == null, step.channel == null, step.color == null));
-
-            SlackService slackService = getSlackService(baseUrl, team, token, tokenCredentialId, botUser, channel);
-            boolean publishSuccess;
-            if (step.attachments != null) {
-                JsonSlurper jsonSlurper = new JsonSlurper();
-                JSON json = null;
-                try {
-                    json = jsonSlurper.parseText(step.attachments);
-                } catch (JSONException e) {
-                    listener.error(Messages.NotificationFailedWithException(e));
-                    return null;
-                }
-                if (!(json instanceof JSONArray)) {
-                    listener.error(Messages.NotificationFailedWithException(new IllegalArgumentException("Attachments must be JSONArray")));
-                    return null;
-                }
-                JSONArray jsonArray = (JSONArray) json;
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    Object object = jsonArray.get(i);
-                    if (object instanceof JSONObject) {
-                        JSONObject jsonNode = ((JSONObject) object);
-                        if (!jsonNode.has("fallback")) {
-                            jsonNode.put("fallback", step.message);
-                        }
-                    }
-                }
-                publishSuccess = slackService.publish(jsonArray, color);
-            } else {
-                publishSuccess = slackService.publish(step.message, color);
-            }
-            if (!publishSuccess && step.failOnError) {
-                throw new AbortException(Messages.NotificationFailed());
-            } else if (!publishSuccess) {
-                listener.error(Messages.NotificationFailed());
-            }*/
             return pdparams.getIncidentKey();
         }
 
-
-        //streamline unit testing
-       /* SlackService getSlackService(String baseUrl, String team, String token, String tokenCredentialId, boolean botUser, String channel) {
-            return new StandardSlackService(baseUrl, team, token, tokenCredentialId, botUser, channel);
-        }*/
     }
 }

@@ -219,37 +219,12 @@ public class PagerDutyTrigger extends Notifier {
                 return PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
             } else if (validationResult == PDConstants.ValidationResult.DO_RESOLVE) {
                 listener.getLogger().println("Resolving incident");
-                return PagerDutyUtils.resolveIncident(getServiceKey(), getIncidentKey(), envVars,listener);
+                return PagerDutyUtils.resolveIncident(pdparams, envVars,listener);
             }
         }
         return true;
     }
 
-/*
-    private boolean resolveIncident(PagerDutyEventsClient pagerDuty, PrintStream logger) {
-        if (this.incidentKey != null && this.incidentKey.trim().length() > 0) {
-            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(this.serviceKey, this.incidentKey);
-            resolveIncidentBuilder.details(DEFAULT_RESOLVE_STR).description(DEFAULT_RESOLVE_DESC);
-
-            ResolveIncident resolveIncident = resolveIncidentBuilder.build();
-            try {
-                EventResult result = pagerDuty.resolve(resolveIncident);
-                if (result != null) {
-                    logger.println("Finished resolving - " + result.getStatus());
-                } else {
-                    logger.println("Attempt to resolve the incident returned null - Incident may already be closed or may not exist.");
-                }
-            } catch (Exception e) {
-                logger.println("Error while trying to resolve ");
-                logger.println(e.getMessage());
-                return false;
-            }
-        } else {
-            logger.println("incidentKey not provided, nothing to resolve. (check previous builds for further clues)");
-        }
-        return true;
-    }
-*/
 
     @Extension
     public static final class DescriptorImpl extends
