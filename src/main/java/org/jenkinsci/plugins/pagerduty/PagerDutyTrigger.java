@@ -205,6 +205,7 @@ public class PagerDutyTrigger extends Notifier {
                            BuildListener listener) throws InterruptedException, IOException {
         LinkedList<Result> resultProbe = generateResultProbe();
 
+        boolean res = true;
         EnvVars envVars = build.getEnvironment(listener);
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
         PagerDutyParamHolder pdparams = new PagerDutyParamHolder(serviceKey, incidentKey, incDescription, incDetails);
@@ -213,13 +214,14 @@ public class PagerDutyTrigger extends Notifier {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");
 //                return triggerPagerDuty(listener, env, pagerDutyEventsClient);
-                return PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
+                res = PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
+                this.incidentKey = pdparams.getIncidentKey();
             } else if (validationResult == PDConstants.ValidationResult.DO_RESOLVE) {
                 listener.getLogger().println("Resolving incident");
-                return PagerDutyUtils.resolveIncident(pdparams, envVars,listener);
+                res = PagerDutyUtils.resolveIncident(pdparams, envVars,listener);
             }
         }
-        return true;
+        return res;
     }
 
 
