@@ -90,7 +90,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "pagerdutyCall";
+            return "pagerduty";
         }
 
         @Override
