@@ -210,9 +210,6 @@ public class PagerDutyTrigger extends Notifier {
         PagerDutyParamHolder pdparams = new PagerDutyParamHolder(serviceKey, incidentKey, incDescription, incDetails);
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
 
-            if (this.serviceKey != null && this.serviceKey.trim().length() > 0)
-
-
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");
 //                return triggerPagerDuty(listener, env, pagerDutyEventsClient);

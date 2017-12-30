@@ -54,6 +54,7 @@ public class PagerDutyUtils {
             resolveIncidentBuilder.details(DEFAULT_RESOLVE_STR).description(DEFAULT_RESOLVE_DESC);
 
             ResolveIncident resolveIncident = resolveIncidentBuilder.build();
+            listener.getLogger().printf("About to resolve incident:  %s%n", pdparams.getIncidentKey());
             try {
                 EventResult result = pagerDuty.resolve(resolveIncident);
                 if (result != null) {

@@ -36,17 +36,17 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
     @Nonnull
     private final String serviceKey;
-    private boolean isResolve;
+    private boolean resolve;
     private String incidentKey;
     private String incDescription;
     private String incDetails;
     public boolean isResolve() {
-        return isResolve;
+        return resolve;
     }
 
     @DataBoundSetter
     public void setResolve(boolean resolve) {
-        isResolve = resolve;
+        this.resolve = resolve;
     }
 
     public String getIncidentKey() {
@@ -124,7 +124,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.serviceKey, step.incidentKey, step.incDescription, step.incDetails);
 
             EnvVars envVars = null;
-            if (step.isResolve()){
+            if (step.resolve == true){
                 PagerDutyUtils.resolveIncident(pdparams, envVars, listener);
             } else {
                 PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
