@@ -121,6 +121,10 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
                 return null;
             }
             PagerDutyTrigger.DescriptorImpl pagerdutyDesc = jenkins.getDescriptorByType(PagerDutyTrigger.DescriptorImpl.class);
+            boolean descExists = (pagerdutyDesc == null);
+            if (descExists)
+                listener.getLogger().println("Desc Exists");
+
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.serviceKey, step.incidentKey, step.incDescription, step.incDetails);
 
             EnvVars envVars = null;
