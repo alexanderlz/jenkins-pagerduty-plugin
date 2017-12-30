@@ -11,13 +11,16 @@ import com.github.dikhan.domain.TriggerIncident;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.model.Result;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import jenkins.model.Jenkins;
-
+import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -27,18 +30,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jenkinsci.plugins.pagerduty.PDConstants.*;
+
 public class PagerDutyTrigger extends Notifier {
-
-    private static final String JENKINS_PD_CLIENT = "JenkinsPagerDutyClient";
-    private static final String DEFAULT_RESOLVE_STR = "Automatically Resolved by PD plugin";
-    private static final String DEFAULT_RESOLVE_DESC = "Resolved by PD plugin";
-
-
-    private enum ValidationResult {
-        DO_NOTHING, DO_TRIGGER, DO_RESOLVE
-    }
-
-    private static final String DEFAULT_DESCRIPTION_STRING = "I was too lazy to create a description, but trust me it's important!";
 
     public String serviceKey;
 
@@ -169,12 +163,12 @@ public class PagerDutyTrigger extends Notifier {
     /*
      * method to verify X previous builds finished with the desired result
      */
-    private ValidationResult validWithPreviousResults(AbstractBuild<?, ?> build, List<Result> desiredResultList, int depth) {
+    private PDConstants.ValidationResult validWithPreviousResults(AbstractBuild<?, ?> build, List<Result> desiredResultList, int depth) {
         int i = 0;
         if (this.resolveOnBackToNormal && build != null && Result.SUCCESS.equals(build.getResult())) {
             AbstractBuild<?, ?> previousBuild = build.getPreviousBuild();
             if (previousBuild != null && !Result.SUCCESS.equals(previousBuild.getResult()))
-                return ValidationResult.DO_RESOLVE;
+                return PDConstants.ValidationResult.DO_RESOLVE;
         } else {
             while (i < depth && build != null) {
                 if (!desiredResultList.contains(build.getResult())) {
@@ -184,10 +178,10 @@ public class PagerDutyTrigger extends Notifier {
                 build = build.getPreviousBuild();
             }
             if (i == depth) {
-                return ValidationResult.DO_TRIGGER;
+                return PDConstants.ValidationResult.DO_TRIGGER;
             }
         }
-        return ValidationResult.DO_NOTHING;
+        return PDConstants.ValidationResult.DO_NOTHING;
     }
 
     /*
@@ -209,27 +203,29 @@ public class PagerDutyTrigger extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
                            BuildListener listener) throws InterruptedException, IOException {
-        PagerDutyEventsClient pagerDutyEventsClient = null;
         LinkedList<Result> resultProbe = generateResultProbe();
 
-        EnvVars env = build.getEnvironment(listener);
-        ValidationResult validationResult = validWithPreviousResults(build, resultProbe, numPreviousBuildsToProbe);
-        if (validationResult != ValidationResult.DO_NOTHING) {
+        EnvVars envVars = build.getEnvironment(listener);
+        PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
+        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(serviceKey, incidentKey, incDescription, incDetails);
+        if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
 
             if (this.serviceKey != null && this.serviceKey.trim().length() > 0)
-                pagerDutyEventsClient = PagerDutyEventsClient.create();
 
-            if (validationResult == ValidationResult.DO_TRIGGER) {
+
+            if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");
-                return triggerPagerDuty(listener, env, pagerDutyEventsClient);
-            } else if (validationResult == ValidationResult.DO_RESOLVE) {
+//                return triggerPagerDuty(listener, env, pagerDutyEventsClient);
+                return PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
+            } else if (validationResult == PDConstants.ValidationResult.DO_RESOLVE) {
                 listener.getLogger().println("Resolving incident");
-                return resolveIncident(pagerDutyEventsClient, listener.getLogger());
+                return PagerDutyUtils.resolveIncident(getServiceKey(), getIncidentKey(), envVars,listener);
             }
         }
         return true;
     }
 
+/*
     private boolean resolveIncident(PagerDutyEventsClient pagerDuty, PrintStream logger) {
         if (this.incidentKey != null && this.incidentKey.trim().length() > 0) {
             ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(this.serviceKey, this.incidentKey);
@@ -253,54 +249,7 @@ public class PagerDutyTrigger extends Notifier {
         }
         return true;
     }
-
-    private boolean triggerPagerDuty(BuildListener listener, EnvVars env, PagerDutyEventsClient pagerDuty) {
-
-        if (pagerDuty == null) {
-            listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
-            return false;
-        }
-
-        String descr = replaceEnvVars(this.incDescription, env, DEFAULT_DESCRIPTION_STRING);
-        String serviceK = replaceEnvVars(this.serviceKey, env, null);
-        String incK = replaceEnvVars(this.incidentKey, env, null);
-        String details = replaceEnvVars(this.incDetails, env, null);
-        boolean hasIncidentKey = false;
-
-        if (incK != null && incK.length() > 0) {
-            hasIncidentKey = true;
-        }
-
-        listener.getLogger().printf("Triggering pagerDuty with serviceKey %s%n", serviceK);
-
-        try {
-            listener.getLogger().printf("incidentKey %s%n", incK);
-            listener.getLogger().printf("description %s%n", descr);
-            listener.getLogger().printf("details %s%n", details);
-            TriggerIncident.TriggerIncidentBuilder incBuilder = TriggerIncident.TriggerIncidentBuilder.create(serviceK, descr).client(JENKINS_PD_CLIENT).details(details);
-
-            if (hasIncidentKey) {
-                incBuilder.incidentKey(incidentKey);
-            }
-            TriggerIncident incident = incBuilder.build();
-            EventResult result = pagerDuty.trigger(incident);
-
-            if (result != null) {
-                if (!hasIncidentKey) {
-                    this.incidentKey = result.getIncidentKey();
-                }
-                listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.getStatus());
-                listener.getLogger().printf("PagerDuty IncidentKey: %s%n", this.incidentKey);
-            } else {
-                listener.getLogger().printf("PagerDuty returned NULL. check network or PD settings!");
-            }
-        } catch (Exception e) {
-            e.printStackTrace(listener.error("Tried to trigger PD with serviceKey = [%s]",
-                    serviceK));
-            return false;
-        }
-        return true;
-    }
+*/
 
     @Extension
     public static final class DescriptorImpl extends
