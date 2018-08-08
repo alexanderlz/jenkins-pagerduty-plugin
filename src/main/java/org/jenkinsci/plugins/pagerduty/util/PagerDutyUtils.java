@@ -49,8 +49,11 @@ public class PagerDutyUtils {
 //            listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
             return false;
         }
+
+        String serviceK = replaceEnvVars(pdparams.serviceKey, envv, null);
+
         if (pdparams.getIncidentKey() != null && pdparams.getIncidentKey().trim().length() > 0) {
-            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(pdparams.getServiceKey(), pdparams.getIncidentKey());
+            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(serviceK, pdparams.getIncidentKey());
             resolveIncidentBuilder.details(DEFAULT_RESOLVE_STR).description(DEFAULT_RESOLVE_DESC);
 
             ResolveIncident resolveIncident = resolveIncidentBuilder.build();
