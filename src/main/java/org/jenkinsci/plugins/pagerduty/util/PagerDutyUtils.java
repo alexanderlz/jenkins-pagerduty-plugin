@@ -8,6 +8,9 @@ import hudson.EnvVars;
 import hudson.model.BuildListener;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+import hudson.model.AbstractBuild;
 
 import java.io.PrintStream;
 import java.util.regex.Matcher;
@@ -43,7 +46,7 @@ public class PagerDutyUtils {
     }
 
 
-    public static boolean resolveIncident(PagerDutyParamHolder pdparams, EnvVars envv, TaskListener listener) {
+    public static boolean resolveIncident(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
         PagerDutyEventsClient pagerDuty = PagerDutyEventsClient.create();
         if (pagerDuty == null) {
 //            listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
@@ -73,7 +76,7 @@ public class PagerDutyUtils {
         return true;
     }
 
-    public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, EnvVars envv, TaskListener listener) {
+    public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
 
         PagerDutyEventsClient pagerDuty = PagerDutyEventsClient.create();
         if (pagerDuty == null) {
@@ -81,19 +84,22 @@ public class PagerDutyUtils {
             return false;
         }
 
-        String descr = replaceEnvVars(pdparams.incDescription, envv, DEFAULT_DESCRIPTION_STRING);
-        String serviceK = replaceEnvVars(pdparams.serviceKey, envv, null);
-        String incK = replaceEnvVars(pdparams.incidentKey, envv, null);
-        String details = replaceEnvVars(pdparams.incDetails, envv, null);
         boolean hasIncidentKey = false;
-
-        if (incK != null && incK.length() > 0) {
-            hasIncidentKey = true;
-        }
-
-        listener.getLogger().printf("Triggering pagerDuty with serviceKey %s%n", serviceK);
+        String serviceK = null;
 
         try {
+
+            String descr = TokenMacro.expandAll( build, listener, pdparams.incDescription );
+            serviceK = TokenMacro.expandAll( build, listener, pdparams.serviceKey);
+            String incK = TokenMacro.expandAll( build, listener,pdparams.incidentKey);
+            String details = TokenMacro.expandAll( build, listener,pdparams.incDetails);
+
+            if (incK != null && incK.length() > 0) {
+                hasIncidentKey = true;
+            }
+
+            listener.getLogger().printf("Triggering pagerDuty with serviceKey %s%n", serviceK);
+
             listener.getLogger().printf("incidentKey %s%n", incK);
             listener.getLogger().printf("description %s%n", descr);
             listener.getLogger().printf("details %s%n", details);

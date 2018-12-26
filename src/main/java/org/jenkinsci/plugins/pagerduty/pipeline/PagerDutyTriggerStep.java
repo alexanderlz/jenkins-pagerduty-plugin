@@ -127,11 +127,10 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.serviceKey, step.incidentKey, step.incDescription, step.incDetails);
 
-            EnvVars envVars = null;
             if (step.resolve == true){
-                PagerDutyUtils.resolveIncident(pdparams, envVars, listener);
+                PagerDutyUtils.resolveIncident(pdparams, null, listener);
             } else {
-                PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
+                PagerDutyUtils.triggerPagerDuty(pdparams, null, listener);
             }
 
             return pdparams.getIncidentKey();

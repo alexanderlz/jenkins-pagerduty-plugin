@@ -214,11 +214,11 @@ public class PagerDutyTrigger extends Notifier {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");
 //                return triggerPagerDuty(listener, env, pagerDutyEventsClient);
-                res = PagerDutyUtils.triggerPagerDuty(pdparams, envVars, listener);
+                res = PagerDutyUtils.triggerPagerDuty(pdparams, build, listener);
                 this.incidentKey = pdparams.getIncidentKey();
             } else if (validationResult == PDConstants.ValidationResult.DO_RESOLVE) {
                 listener.getLogger().println("Resolving incident");
-                res = PagerDutyUtils.resolveIncident(pdparams, envVars,listener);
+                res = PagerDutyUtils.resolveIncident(pdparams, build, listener);
             }
         }
         return res;
