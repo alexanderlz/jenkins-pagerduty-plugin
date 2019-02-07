@@ -11,10 +11,7 @@ import com.github.dikhan.domain.TriggerIncident;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Result;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
@@ -214,7 +211,7 @@ public class PagerDutyTrigger extends Notifier {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");
 //                return triggerPagerDuty(listener, env, pagerDutyEventsClient);
-                res = PagerDutyUtils.triggerPagerDuty(pdparams, build, listener);
+                res = PagerDutyUtils.triggerPagerDuty(pdparams, build, null, listener);
                 this.incidentKey = pdparams.getIncidentKey();
             } else if (validationResult == PDConstants.ValidationResult.DO_RESOLVE) {
                 listener.getLogger().println("Resolving incident");

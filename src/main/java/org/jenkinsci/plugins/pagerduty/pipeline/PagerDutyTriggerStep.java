@@ -6,6 +6,9 @@ package org.jenkinsci.plugins.pagerduty.pipeline;
 
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
@@ -104,6 +107,9 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
         private static final long serialVersionUID = 1L;
 
+        @StepContextParameter
+        private transient Run<?,?> run;
+
         @Inject
         transient PagerDutyTriggerStep step;
 
@@ -128,9 +134,10 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.serviceKey, step.incidentKey, step.incDescription, step.incDetails);
 
             if (step.resolve == true){
-                PagerDutyUtils.resolveIncident(pdparams, null, listener);
+                PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);
             } else {
-                PagerDutyUtils.triggerPagerDuty(pdparams, null, listener);
+                PagerDutyUtils.triggerPagerDuty(pdparams, run, getContext().get(FilePath.class),
+                        listener);
             }
 
             return pdparams.getIncidentKey();

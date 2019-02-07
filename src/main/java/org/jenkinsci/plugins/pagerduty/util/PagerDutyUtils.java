@@ -5,7 +5,9 @@ import com.github.dikhan.domain.EventResult;
 import com.github.dikhan.domain.ResolveIncident;
 import com.github.dikhan.domain.TriggerIncident;
 import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.model.BuildListener;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
@@ -76,7 +78,8 @@ public class PagerDutyUtils {
         return true;
     }
 
-    public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
+    public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, Run<?, ?> build, FilePath workspace,
+                                           TaskListener listener) {
 
         PagerDutyEventsClient pagerDuty = PagerDutyEventsClient.create();
         if (pagerDuty == null) {
@@ -89,10 +92,17 @@ public class PagerDutyUtils {
 
         try {
 
-            String descr = TokenMacro.expandAll( build, listener, pdparams.incDescription );
-            serviceK = TokenMacro.expandAll( build, listener, pdparams.serviceKey);
-            String incK = TokenMacro.expandAll( build, listener,pdparams.incidentKey);
-            String details = TokenMacro.expandAll( build, listener,pdparams.incDetails);
+
+            if(build instanceof AbstractBuild) {
+                pdparams.tokenReplace((AbstractBuild)build, listener);
+            } else{
+                pdparams.tokenReplaceWorkflow(build, workspace, listener);
+            }
+
+            String descr = pdparams.incDescription;
+            serviceK = pdparams.serviceKey;
+            String incK = pdparams.incidentKey;
+            String details = pdparams.incDetails;
 
             if (incK != null && incK.length() > 0) {
                 hasIncidentKey = true;

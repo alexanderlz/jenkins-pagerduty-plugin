@@ -1,5 +1,14 @@
 package org.jenkinsci.plugins.pagerduty;
 
+import hudson.FilePath;
+import hudson.model.AbstractBuild;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+
+import java.io.IOException;
+
 /**
  * Created by alex on 08/11/17.
  */
@@ -50,5 +59,22 @@ public class PagerDutyParamHolder {
     public void setIncDetails(String incDetails) {
         this.incDetails = incDetails;
     }
+
+    public void tokenReplaceWorkflow(Run<?, ?> run, FilePath workspace, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
+        this.setIncDescription(TokenMacro.expandAll(run, workspace, listener, this.incDescription ));
+        this.setServiceKey(TokenMacro.expandAll(run, workspace, listener, this.serviceKey));
+        this.setIncidentKey(TokenMacro.expandAll(run, workspace, listener,this.incidentKey));
+        this.setIncDetails(TokenMacro.expandAll(run, workspace, listener,this.incDetails));
+
+    }
+
+    public void tokenReplace(AbstractBuild<?, ?> build, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
+        this.setIncDescription(TokenMacro.expandAll( build, listener, this.incDescription ));
+        this.setServiceKey(TokenMacro.expandAll( build, listener, this.serviceKey));
+        this.setIncidentKey(TokenMacro.expandAll( build, listener,this.incidentKey));
+        this.setIncDetails(TokenMacro.expandAll( build, listener,this.incDetails));
+
+    }
+
 
 }
