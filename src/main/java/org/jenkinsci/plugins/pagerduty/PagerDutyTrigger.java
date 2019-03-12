@@ -4,10 +4,6 @@ package org.jenkinsci.plugins.pagerduty;
  * Created by alexander on 9/15/15.
  */
 
-import com.github.dikhan.PagerDutyEventsClient;
-import com.github.dikhan.domain.EventResult;
-import com.github.dikhan.domain.ResolveIncident;
-import com.github.dikhan.domain.TriggerIncident;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -21,13 +17,11 @@ import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jenkinsci.plugins.pagerduty.PDConstants.*;
 
 public class PagerDutyTrigger extends Notifier {
 
@@ -137,27 +131,6 @@ public class PagerDutyTrigger extends Notifier {
     }
 
     /*
-     * method to fetch and replace possible Environment Variables from job parameteres
-     */
-    private String replaceEnvVars(String str, EnvVars envv, String defaultString) {
-        StringBuffer sb = new StringBuffer();
-        if (str == null || str.trim().length() < 1) {
-            if (defaultString == null)
-                return null;
-            str = defaultString;
-        }
-        Matcher m = Pattern.compile("\\$\\{.*?\\}|\\$[^\\-\\*\\.#!, ]*")
-                .matcher(str);
-        while (m.find()) {
-            String v = m.group();
-            v = v.replaceAll("\\$", "").replaceAll("\\{", "").replaceAll("\\}", "");
-            m.appendReplacement(sb, envv.get(v, ""));
-        }
-        m.appendTail(sb);
-        return sb.toString();
-    }
-
-    /*
      * method to verify X previous builds finished with the desired result
      */
     private PDConstants.ValidationResult validWithPreviousResults(AbstractBuild<?, ?> build, List<Result> desiredResultList, int depth) {
@@ -203,7 +176,6 @@ public class PagerDutyTrigger extends Notifier {
         LinkedList<Result> resultProbe = generateResultProbe();
 
         boolean res = true;
-        EnvVars envVars = build.getEnvironment(listener);
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
         PagerDutyParamHolder pdparams = new PagerDutyParamHolder(serviceKey, incidentKey, incDescription, incDetails);
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
@@ -216,7 +188,12 @@ public class PagerDutyTrigger extends Notifier {
             } else if (validationResult == PDConstants.ValidationResult.DO_RESOLVE) {
                // listener.getLogger().println(build.getPreviousFailedBuild().getLog());
                 if(this.incidentKey == null || this.incidentKey.isEmpty()){
-                    this.incidentKey = PagerDutyUtils.extractIncidentKey(build.getPreviousFailedBuild().getLog());
+                    AbstractBuild<?, ?> prevBuild = build.getPreviousFailedBuild();
+                    String llog = null;
+                    if (prevBuild != null) {
+                        prevBuild.getLog();
+                        this.incidentKey = PagerDutyUtils.extractIncidentKey(llog);
+                    }
                 }
                 pdparams.setIncidentKey(this.incidentKey);
                 listener.getLogger().println("Resolving incident");
