@@ -37,29 +37,6 @@ public class PagerDutyUtils {
         return inck.group(1);
     }
 
-    /*
- * method to fetch and replace possible Environment Variables from job parameteres
- */
-    private static String replaceEnvVars(String str, EnvVars envv, String defaultString) {
-        if (null == envv)
-            return str;
-        StringBuffer sb = new StringBuffer();
-        if (str == null || str.trim().length() < 1) {
-            if (defaultString == null)
-                return null;
-            str = defaultString;
-        }
-        Matcher m = Pattern.compile("\\$\\{.*?\\}|\\$[^\\-\\*\\.#!, ]*")
-                .matcher(str);
-        while (m.find()) {
-            String v = m.group();
-            v = v.replaceAll("\\$", "").replaceAll("\\{", "").replaceAll("\\}", "");
-            m.appendReplacement(sb, envv.get(v, ""));
-        }
-        m.appendTail(sb);
-        return sb.toString();
-    }
-
 
     public static boolean resolveIncident(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
         PagerDutyEventsClient pagerDuty = PagerDutyEventsClient.create();
@@ -67,11 +44,8 @@ public class PagerDutyUtils {
 //            listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
             return false;
         }
-
-        String serviceK = replaceEnvVars(pdparams.serviceKey, envv, null);
-
         if (pdparams.getIncidentKey() != null && pdparams.getIncidentKey().trim().length() > 0) {
-            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(serviceK, pdparams.getIncidentKey());
+            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(pdparams.getServiceKey(), pdparams.getIncidentKey());
             resolveIncidentBuilder.details(DEFAULT_RESOLVE_STR).description(DEFAULT_RESOLVE_DESC);
 
             ResolveIncident resolveIncident = resolveIncidentBuilder.build();
