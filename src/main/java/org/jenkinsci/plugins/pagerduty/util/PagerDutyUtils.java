@@ -116,6 +116,8 @@ public class PagerDutyUtils {
                     pdparams.incidentKey = result.getIncidentKey();
                 }
                 listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.getStatus());
+                listener.getLogger().printf("Message: %s%n", result.getMessage());
+                listener.getLogger().printf("Errors: %s%n", result.getErrors());
                 listener.getLogger().printf("PagerDuty IncidentKey: <<%s>>%n", pdparams.incidentKey);
             } else {
                 listener.getLogger().printf("PagerDuty returned NULL. check network or PD settings!");
