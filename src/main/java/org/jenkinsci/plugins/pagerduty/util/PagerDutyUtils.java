@@ -24,6 +24,19 @@ import static org.jenkinsci.plugins.pagerduty.PDConstants.*;
  * Created by alexanderl on 10/10/17.
  */
 public class PagerDutyUtils {
+
+    public static String extractIncidentKey(String log) {
+        Pattern pattern = Pattern.compile(".*<<([0-9a-z]*)>>.*");
+
+        Matcher inck = pattern.matcher(log);
+        try {
+            inck.find();
+        }catch (Exception e){
+            return null;
+        }
+        return inck.group(1);
+    }
+
     /*
  * method to fetch and replace possible Environment Variables from job parameteres
  */
@@ -54,8 +67,11 @@ public class PagerDutyUtils {
 //            listener.getLogger().println("Unable to activate pagerduty module, check configuration!");
             return false;
         }
+
+        String serviceK = replaceEnvVars(pdparams.serviceKey, envv, null);
+
         if (pdparams.getIncidentKey() != null && pdparams.getIncidentKey().trim().length() > 0) {
-            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(pdparams.getServiceKey(), pdparams.getIncidentKey());
+            ResolveIncident.ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncident.ResolveIncidentBuilder.create(serviceK, pdparams.getIncidentKey());
             resolveIncidentBuilder.details(DEFAULT_RESOLVE_STR).description(DEFAULT_RESOLVE_DESC);
 
             ResolveIncident resolveIncident = resolveIncidentBuilder.build();
@@ -126,7 +142,7 @@ public class PagerDutyUtils {
                     pdparams.incidentKey = result.getIncidentKey();
                 }
                 listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.getStatus());
-                listener.getLogger().printf("PagerDuty IncidentKey: %s%n", pdparams.incidentKey);
+                listener.getLogger().printf("PagerDuty IncidentKey: <<%s>>%n", pdparams.incidentKey);
             } else {
                 listener.getLogger().printf("PagerDuty returned NULL. check network or PD settings!");
             }
