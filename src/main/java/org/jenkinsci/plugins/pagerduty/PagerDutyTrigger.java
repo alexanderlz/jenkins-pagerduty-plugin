@@ -189,9 +189,8 @@ public class PagerDutyTrigger extends Notifier {
                // listener.getLogger().println(build.getPreviousFailedBuild().getLog());
                 if(this.incidentKey == null || this.incidentKey.isEmpty()){
                     AbstractBuild<?, ?> prevBuild = build.getPreviousFailedBuild();
-                    String llog = null;
                     if (prevBuild != null) {
-                        prevBuild.getLog();
+                        String llog = prevBuild.getLog();
                         this.incidentKey = PagerDutyUtils.extractIncidentKey(llog);
                     }
                 }

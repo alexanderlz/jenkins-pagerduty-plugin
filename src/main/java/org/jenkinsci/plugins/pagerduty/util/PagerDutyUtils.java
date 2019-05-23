@@ -27,7 +27,9 @@ public class PagerDutyUtils {
 
     public static String extractIncidentKey(String log) {
         Pattern pattern = Pattern.compile(".*<<([0-9a-z]*)>>.*");
-
+        if(log == null){
+	   return null;
+	}
         Matcher inck = pattern.matcher(log);
         try {
             inck.find();
