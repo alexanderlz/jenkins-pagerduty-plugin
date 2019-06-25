@@ -15,7 +15,7 @@
 
     <properties>
         <java.level>8</java.level>
-        <jetty.version>9.4.12.v20180830</jetty.version>
+        <jetty.version>9.4.17.v20190418</jetty.version>
         <!--java.level.test>7</java.level.test-->
         <jenkins.version>2.54</jenkins.version>
         <jenkins-test-harness.version>2.22</jenkins-test-harness.version>
