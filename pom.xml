@@ -163,6 +163,7 @@
                     <artifactId>jetty-util</artifactId>
                 </exclusion>
             </exclusions>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
