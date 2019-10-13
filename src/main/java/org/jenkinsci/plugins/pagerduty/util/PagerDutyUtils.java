@@ -4,12 +4,15 @@ import com.github.dikhan.PagerDutyEventsClient;
 import com.github.dikhan.domain.EventResult;
 import com.github.dikhan.domain.ResolveIncident;
 import com.github.dikhan.domain.TriggerIncident;
+import com.github.dikhan.exceptions.NotifyEventException;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,7 +118,7 @@ public class PagerDutyUtils {
             } else {
                 listener.getLogger().print("PagerDuty returned NULL. check network or PD settings!");
             }
-        } catch (Exception e) {
+        } catch (RuntimeException | InterruptedException | IOException | MacroEvaluationException | NotifyEventException e) {
             e.printStackTrace(listener.error("Tried to trigger PD with serviceKey = [%s]", serviceK));
             return false;
         }
