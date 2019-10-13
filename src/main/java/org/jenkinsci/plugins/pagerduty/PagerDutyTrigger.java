@@ -1,10 +1,5 @@
 package org.jenkinsci.plugins.pagerduty;
 
-/**
- * Created by alexander on 9/15/15.
- */
-
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.*;
@@ -19,24 +14,41 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-
+/**
+ * Created by alexander on 9/15/15.
+ */
 public class PagerDutyTrigger extends Notifier {
 
-    public String serviceKey;
+    private String serviceKey;
+    private boolean resolveOnBackToNormal;
+    private boolean triggerOnSuccess;
+    private boolean triggerOnFailure;
+    private boolean triggerOnUnstable;
+    private boolean triggerOnAborted;
+    private boolean triggerOnNotBuilt;
+    private String incidentKey;
+    private String incDescription;
+    private String incDetails;
+    private Integer numPreviousBuildsToProbe;
 
-    public boolean resolveOnBackToNormal;
-    public boolean triggerOnSuccess;
-    public boolean triggerOnFailure;
-    public boolean triggerOnUnstable;
-    public boolean triggerOnAborted;
-    public boolean triggerOnNotBuilt;
-    public String incidentKey;
-    public String incDescription;
-    public String incDetails;
-    public Integer numPreviousBuildsToProbe;
+    @DataBoundConstructor
+    public PagerDutyTrigger(String serviceKey, boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnAborted,
+                            boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String incDescription, String incDetails,
+                            Integer numPreviousBuildsToProbe) {
+        super();
+        this.serviceKey = serviceKey;
+        this.resolveOnBackToNormal = resolveOnBackToNormal;
+        this.triggerOnSuccess = triggerOnSuccess;
+        this.triggerOnFailure = triggerOnFailure;
+        this.triggerOnUnstable = triggerOnUnstable;
+        this.triggerOnAborted = triggerOnAborted;
+        this.triggerOnNotBuilt = triggerOnNotBuilt;
+        this.incidentKey = incidentKey;
+        this.incDescription = incDescription;
+        this.incDetails = incDetails;
+        this.numPreviousBuildsToProbe = (numPreviousBuildsToProbe != null && numPreviousBuildsToProbe > 0) ? numPreviousBuildsToProbe : 1;
+    }
 
     public boolean isResolveOnBackToNormal() {
         return resolveOnBackToNormal;
@@ -95,24 +107,6 @@ public class PagerDutyTrigger extends Notifier {
     public DescriptorImpl getDescriptor() {
         Jenkins j = Jenkins.getInstance();
         return j.getDescriptorByType(DescriptorImpl.class);
-    }
-
-    @DataBoundConstructor
-    public PagerDutyTrigger(String serviceKey, boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnAborted,
-                            boolean triggerOnUnstable, boolean triggerOnNotBuilt, String incidentKey, String incDescription, String incDetails,
-                            Integer numPreviousBuildsToProbe) {
-        super();
-        this.serviceKey = serviceKey;
-        this.resolveOnBackToNormal = resolveOnBackToNormal;
-        this.triggerOnSuccess = triggerOnSuccess;
-        this.triggerOnFailure = triggerOnFailure;
-        this.triggerOnUnstable = triggerOnUnstable;
-        this.triggerOnAborted = triggerOnAborted;
-        this.triggerOnNotBuilt = triggerOnNotBuilt;
-        this.incidentKey = incidentKey;
-        this.incDescription = incDescription;
-        this.incDetails = incDetails;
-        this.numPreviousBuildsToProbe = (numPreviousBuildsToProbe != null && numPreviousBuildsToProbe > 0) ? numPreviousBuildsToProbe : 1;
     }
 
     private LinkedList<Result> generateResultProbe() {
@@ -179,15 +173,14 @@ public class PagerDutyTrigger extends Notifier {
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
         PagerDutyParamHolder pdparams = new PagerDutyParamHolder(serviceKey, incidentKey, incDescription, incDetails);
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
-
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");
 //                return triggerPagerDuty(listener, env, pagerDutyEventsClient);
                 res = PagerDutyUtils.triggerPagerDuty(pdparams, build, null, listener);
                 this.incidentKey = pdparams.getIncidentKey();
             } else if (validationResult == PDConstants.ValidationResult.DO_RESOLVE) {
-               // listener.getLogger().println(build.getPreviousFailedBuild().getLog());
-                if(this.incidentKey == null || this.incidentKey.isEmpty()){
+                // listener.getLogger().println(build.getPreviousFailedBuild().getLog());
+                if (this.incidentKey == null || this.incidentKey.isEmpty()) {
                     AbstractBuild<?, ?> prevBuild = build.getPreviousFailedBuild();
                     if (prevBuild != null) {
                         String llog = prevBuild.getLog();
@@ -202,10 +195,8 @@ public class PagerDutyTrigger extends Notifier {
         return res;
     }
 
-
     @Extension
-    public static final class DescriptorImpl extends
-            BuildStepDescriptor<Publisher> {
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         /*
          * (non-Javadoc)
@@ -226,6 +217,5 @@ public class PagerDutyTrigger extends Notifier {
         public String getDisplayName() {
             return "PagerDuty Incident Trigger";
         }
-
     }
 }
