@@ -14,19 +14,17 @@ import java.io.IOException;
  */
 public class PagerDutyParamHolder {
 
+    private String serviceKey;
+    private String incidentKey;
+    private String incDescription;
+    private String incDetails;
+
     public PagerDutyParamHolder(String serviceKey, String incidentKey, String incDescription, String incDetails) {
         this.serviceKey = serviceKey;
         this.incDescription = incDescription;
         this.incidentKey = incidentKey;
         this.incDetails = incDetails;
-
     }
-
-    public String serviceKey;
-    public String incidentKey;
-    public String incDescription;
-    public String incDetails;
-
 
     public String getServiceKey() {
         return serviceKey;
@@ -61,20 +59,16 @@ public class PagerDutyParamHolder {
     }
 
     public void tokenReplaceWorkflow(Run<?, ?> run, FilePath workspace, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
-        this.setIncDescription(TokenMacro.expandAll(run, workspace, listener, this.incDescription ));
+        this.setIncDescription(TokenMacro.expandAll(run, workspace, listener, this.incDescription));
         this.setServiceKey(TokenMacro.expandAll(run, workspace, listener, this.serviceKey));
-        this.setIncidentKey(TokenMacro.expandAll(run, workspace, listener,this.incidentKey));
-        this.setIncDetails(TokenMacro.expandAll(run, workspace, listener,this.incDetails));
-
+        this.setIncidentKey(TokenMacro.expandAll(run, workspace, listener, this.incidentKey));
+        this.setIncDetails(TokenMacro.expandAll(run, workspace, listener, this.incDetails));
     }
 
     public void tokenReplace(AbstractBuild<?, ?> build, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
-        this.setIncDescription(TokenMacro.expandAll( build, listener, this.incDescription ));
-        this.setServiceKey(TokenMacro.expandAll( build, listener, this.serviceKey));
-        this.setIncidentKey(TokenMacro.expandAll( build, listener,this.incidentKey));
-        this.setIncDetails(TokenMacro.expandAll( build, listener,this.incDetails));
-
+        this.setIncDescription(TokenMacro.expandAll(build, listener, this.incDescription));
+        this.setServiceKey(TokenMacro.expandAll(build, listener, this.serviceKey));
+        this.setIncidentKey(TokenMacro.expandAll(build, listener, this.incidentKey));
+        this.setIncDetails(TokenMacro.expandAll(build, listener, this.incDetails));
     }
-
-
 }

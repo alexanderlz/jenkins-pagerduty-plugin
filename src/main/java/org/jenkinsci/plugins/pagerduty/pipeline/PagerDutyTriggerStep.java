@@ -1,10 +1,5 @@
 package org.jenkinsci.plugins.pagerduty.pipeline;
 
-/**
- * Created by alex on 09/07/17.
- */
-
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
@@ -24,18 +19,12 @@ import org.kohsuke.stapler.DataBoundSetter;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
-
-
 /**
  * Workflow step to trigger/resolve pagerduty.
+ *
+ * Created by alex on 09/07/17.
  */
 public class PagerDutyTriggerStep extends AbstractStepImpl {
-
-
-    @Nonnull
-    public String getServiceKey() {
-        return serviceKey;
-    }
 
     @Nonnull
     private final String serviceKey;
@@ -43,13 +32,24 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private String incidentKey;
     private String incDescription;
     private String incDetails;
-    public boolean isResolve() {
-        return resolve;
+
+    @DataBoundConstructor
+    public PagerDutyTriggerStep(@Nonnull String serviceKey) {
+        this.serviceKey = serviceKey;
+    }
+
+    @Nonnull
+    public String getServiceKey() {
+        return serviceKey;
     }
 
     @DataBoundSetter
     public void setResolve(boolean resolve) {
         this.resolve = resolve;
+    }
+
+    public boolean isResolve() {
+        return resolve;
     }
 
     public String getIncidentKey() {
@@ -79,11 +79,6 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
         this.incDetails = incDetails;
     }
 
-    @DataBoundConstructor
-    public PagerDutyTriggerStep(@Nonnull String serviceKey) {
-        this.serviceKey = serviceKey;
-    }
-
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
 
@@ -100,7 +95,6 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
         public String getDisplayName() {
             return "PagerDuty trigger/resolve step";
         }
-
     }
 
     public static class PagerDutyTriggerStepExecution extends AbstractSynchronousNonBlockingStepExecution<String> {
@@ -108,7 +102,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
         private static final long serialVersionUID = 1L;
 
         @StepContextParameter
-        private transient Run<?,?> run;
+        private transient Run<?, ?> run;
 
         @Inject
         transient PagerDutyTriggerStep step;
@@ -118,7 +112,6 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
         @Override
         protected String run() throws Exception {
-
             Jenkins jenkins;
             try {
                 jenkins = Jenkins.getInstance();
@@ -128,20 +121,19 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
             }
             PagerDutyTrigger.DescriptorImpl pagerdutyDesc = jenkins.getDescriptorByType(PagerDutyTrigger.DescriptorImpl.class);
             boolean descExists = (pagerdutyDesc == null);
-            if (descExists)
+            if (descExists) {
                 listener.getLogger().println("Desc Exists");
+            }
 
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.serviceKey, step.incidentKey, step.incDescription, step.incDetails);
 
-            if (step.resolve == true){
+            if (step.resolve == true) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);
             } else {
-                PagerDutyUtils.triggerPagerDuty(pdparams, run, getContext().get(FilePath.class),
-                        listener);
+                PagerDutyUtils.triggerPagerDuty(pdparams, run, getContext().get(FilePath.class), listener);
             }
 
             return pdparams.getIncidentKey();
         }
-
     }
 }
