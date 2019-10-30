@@ -4,17 +4,15 @@ import com.github.dikhan.PagerDutyEventsClient;
 import com.github.dikhan.domain.EventResult;
 import com.github.dikhan.domain.ResolveIncident;
 import com.github.dikhan.domain.TriggerIncident;
-import hudson.EnvVars;
+import com.github.dikhan.exceptions.NotifyEventException;
 import hudson.FilePath;
-import hudson.model.BuildListener;
+import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
-import org.jenkinsci.plugins.tokenmacro.TokenMacro;
-import hudson.model.AbstractBuild;
 
-import java.io.PrintStream;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,16 +25,17 @@ public class PagerDutyUtils {
 
     public static String extractIncidentKey(String log) {
         Pattern pattern = Pattern.compile(".*<<([0-9a-z]*)>>.*");
-
+        if (log == null) {
+            return null;
+        }
         Matcher inck = pattern.matcher(log);
         try {
             inck.find();
-        }catch (Exception e){
+        } catch (Exception e) {
             return null;
         }
         return inck.group(1);
     }
-
 
     public static boolean resolveIncident(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
         PagerDutyEventsClient pagerDuty = PagerDutyEventsClient.create();
@@ -68,8 +67,7 @@ public class PagerDutyUtils {
         return true;
     }
 
-    public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, Run<?, ?> build, FilePath workspace,
-                                           TaskListener listener) {
+    public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, Run<?, ?> build, FilePath workspace, TaskListener listener) {
 
         PagerDutyEventsClient pagerDuty = PagerDutyEventsClient.create();
         if (pagerDuty == null) {
@@ -81,18 +79,16 @@ public class PagerDutyUtils {
         String serviceK = null;
 
         try {
-
-
-            if(build instanceof AbstractBuild) {
-                pdparams.tokenReplace((AbstractBuild)build, listener);
-            } else{
+            if (build instanceof AbstractBuild) {
+                pdparams.tokenReplace((AbstractBuild) build, listener);
+            } else {
                 pdparams.tokenReplaceWorkflow(build, workspace, listener);
             }
 
-            String descr = pdparams.incDescription;
-            serviceK = pdparams.serviceKey;
-            String incK = pdparams.incidentKey;
-            String details = pdparams.incDetails;
+            String descr = pdparams.getIncDescription();
+            serviceK = pdparams.getServiceKey();
+            String incK = pdparams.getIncidentKey();
+            String details = pdparams.getIncDetails();
 
             if (incK != null && incK.length() > 0) {
                 hasIncidentKey = true;
@@ -106,28 +102,26 @@ public class PagerDutyUtils {
             TriggerIncident.TriggerIncidentBuilder incBuilder = TriggerIncident.TriggerIncidentBuilder.create(serviceK, descr).client(JENKINS_PD_CLIENT).details(details);
 
             if (hasIncidentKey) {
-                incBuilder.incidentKey(pdparams.incidentKey);
+                incBuilder.incidentKey(pdparams.getIncidentKey());
             }
             TriggerIncident incident = incBuilder.build();
             EventResult result = pagerDuty.trigger(incident);
 
             if (result != null) {
                 if (!hasIncidentKey) {
-                    pdparams.incidentKey = result.getIncidentKey();
+                    pdparams.setIncidentKey(result.getIncidentKey());
                 }
                 listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.getStatus());
                 listener.getLogger().printf("Message: %s%n", result.getMessage());
                 listener.getLogger().printf("Errors: %s%n", result.getErrors());
-                listener.getLogger().printf("PagerDuty IncidentKey: <<%s>>%n", pdparams.incidentKey);
+                listener.getLogger().printf("PagerDuty IncidentKey: <<%s>>%n", pdparams.getIncidentKey());
             } else {
-                listener.getLogger().printf("PagerDuty returned NULL. check network or PD settings!");
+                listener.getLogger().print("PagerDuty returned NULL. check network or PD settings!");
             }
-        } catch (Exception e) {
-            e.printStackTrace(listener.error("Tried to trigger PD with serviceKey = [%s]",
-                    serviceK));
+        } catch (RuntimeException | InterruptedException | IOException | MacroEvaluationException | NotifyEventException e) {
+            e.printStackTrace(listener.error("Tried to trigger PD with serviceKey = [%s]", serviceK));
             return false;
         }
         return true;
     }
-
 }

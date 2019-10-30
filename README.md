@@ -1,19 +1,5 @@
-# jenkins-pagerduty-plugin
-Jenkins plugin that allows triggering [PagerDuty] (https://www.pagerduty.com/) incidents as postbuild
+# Jenkins PagerDuty Plugin
 
-
-PagerDuty API calls done through this great [utility by square] (https://github.com/square/pagerduty-incidents)
-
-
-Usage:
-
-```
-$ git clone git@github.com:alexanderlz/jenkins-pagerduty-plugin.git
-$ cd jenkins-pagerduty-plugin
-$ mvn clean package
-```
-
-then upload the hpi file to jenkins
-
+Jenkins plugin that allows triggering [PagerDuty](https://www.pagerduty.com/) incidents as post-build action or pipeline step.
 
 [![Gitter](https://badges.gitter.im/jenkinsci/pagerduty-plugin.svg)](https://gitter.im/jenkinsci/pagerduty-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
