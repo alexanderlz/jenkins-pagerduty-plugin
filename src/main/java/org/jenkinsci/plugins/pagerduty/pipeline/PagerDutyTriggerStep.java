@@ -27,20 +27,24 @@ import javax.inject.Inject;
 public class PagerDutyTriggerStep extends AbstractStepImpl {
 
     @Nonnull
-    private final String serviceKey;
+    private final String routingKey;
     private boolean resolve;
-    private String incidentKey;
-    private String incDescription;
-    private String incDetails;
+    private String dedupKey;
+    private String incidentSummary;
+    private String incidentSource;
+    private String incidentSeverity;
+    private String incidentComponent;
+    private String incidentGroup;
+    private String incidentClass;
 
     @DataBoundConstructor
-    public PagerDutyTriggerStep(@Nonnull String serviceKey) {
-        this.serviceKey = serviceKey;
+    public PagerDutyTriggerStep(@Nonnull String routingKey) {
+        this.routingKey = routingKey;
     }
 
     @Nonnull
-    public String getServiceKey() {
-        return serviceKey;
+    public String getRoutingKey() {
+        return routingKey;
     }
 
     @DataBoundSetter
@@ -52,31 +56,67 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
         return resolve;
     }
 
-    public String getIncidentKey() {
-        return incidentKey;
+    public String getDedupKey() {
+        return dedupKey;
     }
 
     @DataBoundSetter
-    public void setIncidentKey(String incidentKey) {
-        this.incidentKey = incidentKey;
+    public void setDedupKey(String dedupKey) {
+        this.dedupKey = dedupKey;
     }
 
-    public String getIncDescription() {
-        return incDescription;
-    }
-
-    @DataBoundSetter
-    public void setIncDescription(String incDescription) {
-        this.incDescription = incDescription;
-    }
-
-    public String getIncDetails() {
-        return incDetails;
+    public String getIncidentSummary() {
+        return incidentSummary;
     }
 
     @DataBoundSetter
-    public void setIncDetails(String incDetails) {
-        this.incDetails = incDetails;
+    public void setIncidentSummary(String incidentSummary) {
+        this.incidentSummary = incidentSummary;
+    }
+
+    public String getIncidentSource() {
+        return incidentSource;
+    }
+
+    @DataBoundSetter
+    public void setIncidentSource(String incidentSource) {
+        this.incidentSource = incidentSource;
+    }
+
+    public String getIncidentSeverity() {
+        return incidentSeverity;
+    }
+
+    @DataBoundSetter
+    public void setIncidentSeverity(String incidentSeverity) {
+        this.incidentSeverity = incidentSeverity;
+    }
+
+    public String getIncidentComponent() {
+        return incidentComponent;
+    }
+
+    @DataBoundSetter
+    public void setIncidentComponent(String incidentComponent) {
+        this.incidentComponent = incidentComponent;
+    }
+
+    public String getIncidentGroup() {
+        return incidentGroup;
+    }
+
+    @DataBoundSetter
+    public void setIncidentGroup(String incidentGroup) {
+        this.incidentGroup = incidentGroup;
+    }
+
+    public String getIncidentClass() {
+        return incidentClass;
+    }
+
+    @DataBoundSetter
+    public void setIncidentClass(String incidentClass) {
+        this.incidentClass = incidentClass;
     }
 
     @Extension
@@ -125,15 +165,16 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
                 listener.getLogger().println("Desc Exists");
             }
 
-            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.serviceKey, step.incidentKey, step.incDescription, step.incDetails);
+            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary,
+                    step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass);
 
-            if (step.resolve == true) {
+            if (step.resolve) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);
             } else {
                 PagerDutyUtils.triggerPagerDuty(pdparams, run, getContext().get(FilePath.class), listener);
             }
 
-            return pdparams.getIncidentKey();
+            return pdparams.getDedupKey();
         }
     }
 }
