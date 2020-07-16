@@ -42,9 +42,9 @@ public class PagerDutyTrigger extends Notifier {
     @DataBoundConstructor
     public PagerDutyTrigger(String routingKey, String dedupKey, String incidentSummary, String incidentSource,
                             String incidentSeverity, String incidentComponent, String incidentGroup,
-                            String incidentClass, boolean triggerOnSuccess, boolean triggerOnFailure,
-                            boolean triggerOnUnstable, boolean triggerOnAborted, boolean triggerOnNotBuilt,
-                            Integer numPreviousBuildsToProbe) {
+                            String incidentClass, boolean resolveOnBackToNormal, boolean triggerOnSuccess,
+                            boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted,
+                            boolean triggerOnNotBuilt, Integer numPreviousBuildsToProbe) {
         super();
         this.routingKey = routingKey;
         this.dedupKey = dedupKey;
@@ -54,6 +54,7 @@ public class PagerDutyTrigger extends Notifier {
         this.incidentComponent = incidentComponent;
         this.incidentGroup = incidentGroup;
         this.incidentClass = incidentClass;
+        this.resolveOnBackToNormal = resolveOnBackToNormal;
         this.triggerOnSuccess = triggerOnSuccess;
         this.triggerOnFailure = triggerOnFailure;
         this.triggerOnUnstable = triggerOnUnstable;
