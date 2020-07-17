@@ -13,12 +13,12 @@
   <f:entry title="Source" field="incidentSource">
      <f:textbox />
   </f:entry>
-  <f:entry title="Severity" field="incidentSeverity">
-     <select>
-       <option value="critical">Critical</option>
-       <option value="error">Error</option>
-       <option value="warning">Warning</option>
-       <option value="info">Info</option>
+  <f:entry title="Severity" field="incidentSeverity" name="incidentSeverity">
+     <select name="incidentSeverity">
+       <option value="critical" selected="${instance.incidentSeverity.equals('critical')? 'true':null}">Critical</option>
+       <option value="error" selected="${instance.incidentSeverity.equals('error')? 'true':null}">Error</option>
+       <option value="warning" selected="${instance.incidentSeverity.equals('warning')? 'true':null}">Warning</option>
+       <option value="info" selected="${instance.incidentSeverity.equals('info')? 'true':null}">Info</option>
      </select>
   </f:entry>
   <f:entry title="Component" field="incidentComponent">
