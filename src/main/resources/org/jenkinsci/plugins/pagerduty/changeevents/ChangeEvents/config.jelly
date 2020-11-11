@@ -1,0 +1,21 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="Integration Key" field="integrationKey">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Create Change Event on SUCCESS" field="createOnSuccess">
+        <f:checkbox />
+    </f:entry>
+    <f:entry title="Create Change Event on FAILURE" field="createOnFailure">
+        <f:checkbox />
+    </f:entry>
+    <f:entry title="Create Change Event on UNSTABLE" field="createOnUnstable">
+        <f:checkbox />
+    </f:entry>
+    <f:entry title="Create Change Event on ABORTED" field="createOnAborted">
+        <f:checkbox />
+    </f:entry>
+    <f:entry title="Create Change Event on NOT_BUILT" field="createOnNotBuilt">
+        <f:checkbox />
+    </f:entry>
+</j:jelly>
