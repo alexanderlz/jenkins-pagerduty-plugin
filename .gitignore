@@ -14,3 +14,6 @@ hs_err_pid*
 
 #IntelliJ
 .idea
+
+# Where files are stored when running the development server
+work/
