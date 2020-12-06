@@ -1,16 +1,33 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
                  xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="Service Integration Key" field="serviceKey">
+  <f:entry title="Routing Key" field="routingKey">
     <f:textbox />
   </f:entry>
-  <f:entry title="incidentKey" field="incidentKey">
+  <f:entry title="Dedup Key" field="dedupKey">
     <f:textbox />
   </f:entry>
-  <f:entry title="Incident Description" field="incDescription">
+  <f:entry title="Summary" field="incidentSummary">
      <f:textbox />
   </f:entry>
-  <f:entry title="Incident Details" field="incDetails">
+  <f:entry title="Source" field="incidentSource">
+     <f:textbox />
+  </f:entry>
+  <f:entry title="Severity" field="incidentSeverity" name="incidentSeverity">
+     <select name="incidentSeverity">
+       <option value="critical" selected="${instance.incidentSeverity.equals('critical')? 'true':null}">Critical</option>
+       <option value="error" selected="${instance.incidentSeverity.equals('error')? 'true':null}">Error</option>
+       <option value="warning" selected="${instance.incidentSeverity.equals('warning')? 'true':null}">Warning</option>
+       <option value="info" selected="${instance.incidentSeverity.equals('info')? 'true':null}">Info</option>
+     </select>
+  </f:entry>
+  <f:entry title="Component" field="incidentComponent">
+     <f:textbox />
+  </f:entry>
+  <f:entry title="Group" field="incidentGroup">
+     <f:textbox />
+  </f:entry>
+  <f:entry title="Class" field="incidentClass">
      <f:textbox />
   </f:entry>
   <f:entry title="Number of Consecutive builds before Triggering" field="numPreviousBuildsToProbe">
