@@ -5,6 +5,7 @@ import javax.inject.Inject;
 
 import org.jenkinsci.plugins.pagerduty.changeevents.ChangeEventSender;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -16,7 +17,8 @@ import hudson.model.TaskListener;
 /**
  * Workflow step for creating a PagerDuty Change Event.
  */
-public class PagerDutyChangeEventStep {
+public class PagerDutyChangeEventStep extends AbstractStepImpl {
+
   @Nonnull
   private final String integrationKey;
 
