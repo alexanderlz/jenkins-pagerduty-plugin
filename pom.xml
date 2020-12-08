@@ -8,7 +8,7 @@
         <relativePath />
     </parent>
     <artifactId>pagerduty</artifactId>
-    <version>0.6.1-SNAPSHOT</version>
+    <version>0.6.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <properties>
         <java.level>8</java.level>
@@ -17,7 +17,7 @@
     </properties>
     <name>PagerDuty Plugin</name>
     <description>PagerDuty incident Trigger plugin</description>
-    <url>https://wiki.jenkins.io/display/JENKINS/PagerDuty+Plugin</url>
+    <url>https://github.com/jenkinsci/pagerduty-plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
