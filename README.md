@@ -14,7 +14,7 @@ Allows users to send **Change Events** and trigger postbuild **Incidents** via
 
 #### Features
 
--   Support for PagerDuty Change Events API
+-   Support for PagerDuty [Change Events](https://support.pagerduty.com/docs/change-events) API
 -   Trigger incidents on various job statuses
     Success/Failure/Aborted/Unstable/Not\_Built
 -   Trigger incidents based on number of consecutive build results
