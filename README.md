@@ -44,13 +44,24 @@ Once you have an integration key you can add the appropriate action to your Jenk
 
 ### Pipeline
 
-`pagerduty(resolve: false, serviceKey: "$SERVICE\_KEY", incidentKey:
-"$INCIDENT\_KEY", incDescription: "pipeline test incident", incDetail:
-"pipeline test")`
+#### Trigger/Resolve Incidents
+
+PLEASE NOTE -
+routing key and integration key are the same thing!
 
 
-`if resolve == false, the pagerduty triggers an incident and returns the
-incidentKey`
+`pagerduty(resolve: false, routingKey: "$ROUTING_KEY [NOT NULL]", 
+dedupKey:"$DEDUP_KEY", incidentSummary:"$INCIDENT_SUMMARY", 
+incidentSource: "$INCIDENT_SOURCE", incidentSeverity:"$INCIDENT_SEVERITY",
+incidentComponent:"$INCIDENT_COMPONENT", incidentGroup:"$INCIDENT_GROUP", incidentClass:"$INCIDENT_CLASS")`
+
+
+if resolve == false, pagerduty triggers an incident and returns the
+incidentKey
+
+#### Change Events
+
+`pagerdutyChangeEvent(integrationKey: '$INTEGRATION_KEY')`
 
 ---
 You can choose one (or both) of the options to use PagerDuty
@@ -77,6 +88,10 @@ Using the "PagerDuty Change Events" action, you can create a [change event](http
 ---
 
 ## Version History
+
+#### Version 0.6.2 (Jan 03, 2021)
+-   Documentation Fix
+-   Bug Fixes (Resolves JENKINS-64485 and #43)
 
 #### Version 0.6.1 (Dec 08, 2020)
 
