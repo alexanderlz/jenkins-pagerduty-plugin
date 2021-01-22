@@ -21,9 +21,19 @@ import java.util.TimeZone;
  * it to PagerDuty.
  */
 public class ChangeEventSender {
-    public final void send(String integrationKey, Run<?, ?> build, TaskListener listener) {
+
+    
+    public final void send(String integrationKey, String summaryText, Run<?, ?> build, TaskListener listener) {
         try {
-            ChangeEvent changeEvent = getChangeEvent(integrationKey, build);
+        	
+        	ChangeEvent changeEvent = getChangeEvent(integrationKey,build);
+        	
+        	if(summaryText != null && !summaryText.equals(""))
+        	{
+        		 changeEvent.setSummary(summaryText);
+        	}
+        	
+          
             String json = convertToJSON(changeEvent);
 
             listener.getLogger().println("Generated payload for PagerDuty Change Events");
@@ -45,6 +55,7 @@ public class ChangeEventSender {
         return new ChangeEvent.Builder().setIntegrationKey(integrationKey).setSummary(summary)
                 .setTimestamp(build.getTime()).setCustomDetails(customDetails).addLink(buildLink).build();
     }
+    
 
     private String getSummary(Run<?, ?> build) {
         String message = build.getFullDisplayName();

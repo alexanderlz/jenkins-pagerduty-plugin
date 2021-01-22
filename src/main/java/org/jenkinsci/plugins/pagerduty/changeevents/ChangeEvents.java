@@ -60,6 +60,10 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
      * Should a change event be created on not built builds.
      */
     private boolean createOnNotBuilt;
+    /**
+     * custom event data that can be passed on to set as summary
+     */
+    private   String summaryText ;
 
     @DataBoundConstructor
     public ChangeEvents(String integrationKey) {
@@ -74,7 +78,10 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
         if ((result == Result.SUCCESS && createOnSuccess) || (result == Result.FAILURE && createOnFailure)
                 || (result == Result.UNSTABLE && createOnUnstable) || (result == Result.ABORTED && createOnAborted)
                 || (result == Result.NOT_BUILT && createOnNotBuilt)) {
-            new ChangeEventSender().send(integrationKey, build, listener);
+        	
+        	
+        	new ChangeEventSender().send(integrationKey, summaryText, build, listener);
+        	
         }
 
     }
@@ -86,6 +93,10 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
     public String getIntegrationKey() {
         return integrationKey;
     }
+    
+    public String getSummaryText() {
+	    return summaryText;
+	  }
 
     public boolean getCreateOnSuccess() {
         return createOnSuccess;
@@ -130,6 +141,11 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
     @DataBoundSetter
     public void setCreateOnNotBuilt(boolean createOnNotBuilt) {
         this.createOnNotBuilt = createOnNotBuilt;
+    }
+    
+    @DataBoundSetter
+    public void setSummaryText(String summaryText) {
+  	  this.summaryText = summaryText;
     }
 
     @Extension
