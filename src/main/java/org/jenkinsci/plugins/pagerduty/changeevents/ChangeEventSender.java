@@ -11,6 +11,7 @@ import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +54,7 @@ public class ChangeEventSender {
         ChangeEvent.Link buildLink = getBuildLink(build);
 
         return new ChangeEvent.Builder().setIntegrationKey(integrationKey).setSummary(summary)
-                .setTimestamp(build.getTime()).setCustomDetails(customDetails).addLink(buildLink).build();
+                .setTimestamp(new Date()).setCustomDetails(customDetails).addLink(buildLink).build();
     }
     
 
