@@ -30,10 +30,10 @@ public class PagerDutyUtils {
         Matcher dedupKey = pattern.matcher(log);
         try {
             dedupKey.find();
+            return dedupKey.group(1);
         } catch (Exception e) {
             return null;
         }
-        return dedupKey.group(1);
     }
 
     public static boolean resolveIncident(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
