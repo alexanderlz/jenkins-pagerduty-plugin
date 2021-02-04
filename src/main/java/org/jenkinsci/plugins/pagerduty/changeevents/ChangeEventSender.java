@@ -11,6 +11,7 @@ import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,9 +22,19 @@ import java.util.TimeZone;
  * it to PagerDuty.
  */
 public class ChangeEventSender {
-    public final void send(String integrationKey, Run<?, ?> build, TaskListener listener) {
+
+    
+    public final void send(String integrationKey, String summaryText, Run<?, ?> build, TaskListener listener) {
         try {
-            ChangeEvent changeEvent = getChangeEvent(integrationKey, build);
+        	
+        	ChangeEvent changeEvent = getChangeEvent(integrationKey,build);
+        	
+        	if(summaryText != null && !summaryText.equals(""))
+        	{
+        		 changeEvent.setSummary(summaryText);
+        	}
+        	
+          
             String json = convertToJSON(changeEvent);
 
             listener.getLogger().println("Generated payload for PagerDuty Change Events");
@@ -43,8 +54,9 @@ public class ChangeEventSender {
         ChangeEvent.Link buildLink = getBuildLink(build);
 
         return new ChangeEvent.Builder().setIntegrationKey(integrationKey).setSummary(summary)
-                .setTimestamp(build.getTime()).setCustomDetails(customDetails).addLink(buildLink).build();
+                .setTimestamp(new Date()).setCustomDetails(customDetails).addLink(buildLink).build();
     }
+    
 
     private String getSummary(Run<?, ?> build) {
         String message = build.getFullDisplayName();
