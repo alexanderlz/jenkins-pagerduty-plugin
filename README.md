@@ -85,9 +85,26 @@ Using the "PagerDuty Change Events" action, you can create a [change event](http
 ![trigger options](https://raw.githubusercontent.com/jenkinsci/pagerduty-plugin/master/screen1.png)
 
 
----
+### Create Change Events From A Freestyle Job
+
+The configuration of a freestyle job allows for including PagerDuty
+change events as build steps by passing the integration key and a
+custom summary text field. If the summary text field is left blank,
+the default description of the Jenkins build job and its build number
+are used. Here's an example of a freestyle job configuration page:
+
+![freestyle job configuration](https://raw.githubusercontent.com/akrapfl/pagerduty-plugin/feature/freestyle-change-event-build-steps/screen4.png)
+
+The PagerDuty change event results of the above freestyle job are
+shown below:
+
+![freestyle change events](https://raw.githubusercontent.com/akrapfl/pagerduty-plugin/feature/freestyle-change-event-build-steps/screen3.png)
+
 
 ## Version History
+
+#### Version 0.x.x (Feb 28, 2021)
+-   Freestyle job change events (Resolves JENKINS-64774 and #51)
 
 #### Version 0.6.2 (Jan 03, 2021)
 -   Documentation Fix
