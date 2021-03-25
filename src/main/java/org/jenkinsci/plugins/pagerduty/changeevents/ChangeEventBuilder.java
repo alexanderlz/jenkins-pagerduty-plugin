@@ -13,6 +13,10 @@ import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import java.io.IOException;
+import java.lang.InterruptedException;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,9 +49,15 @@ public class ChangeEventBuilder extends Builder  {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-	new ChangeEventSender().send(integrationKey, summaryText, build, listener);
-	return true;
+	public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+		String expandedSummaryText = summaryText;
+		try {
+			expandedSummaryText = TokenMacro.expandAll(build, listener, summaryText);
+		} catch (IOException | MacroEvaluationException | InterruptedException e) {
+			listener.getLogger().println("Error replacing summaryText tokens.");
+		}
+		new ChangeEventSender().send(integrationKey, expandedSummaryText, build, listener);
+		return true;
     }
 
     public String getIntegrationKey() {
