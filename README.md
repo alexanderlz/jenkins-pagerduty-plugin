@@ -41,7 +41,20 @@ Before you can use this plugin you'll need an **integration key** (also known as
 
 Once you have an integration key you can add the appropriate action to your Jenkins project and supply it with the integration key. Be sure to select which job results you want to send an event to PagerDuty.
 
+---
+## IMPORTANT!
 
+
+ **There is a beak in backwards compatibility between versions 4.x.x and 6.x.x**
+
+ if you are migrating from earlier versions to 6.x.x and above note the following changes:
+
+-    serviceKey is replaced with **routingKey**
+-    incidentKey is replaced with **dedupKey**
+-    incDescription/incDetails are replaced with **incidentSummary**
+-    please note the new fields introduced starting version 6.x.x
+
+---
 ### Pipeline
 
 #### Trigger/Resolve Incidents
@@ -103,8 +116,12 @@ shown below:
 
 ## Version History
 
-#### Version 0.x.x (Feb 28, 2021)
+#### Version 7.0.0 (Mar 31, 2021)
+(thanks [Bryan Bishop](https://github.com/bjbishop) and [Adam Krapfl](https://github.com/akrapfl)!)
+-   ChangeEvent custom summary text
+-   Support for tokenized strings in ChangeEvent 
 -   Freestyle job change events (Resolves JENKINS-64774 and #51)
+-   Bug Fixes
 
 #### Version 0.6.2 (Jan 03, 2021)
 -   Documentation Fix
@@ -120,6 +137,7 @@ shown below:
 #### Version 0.6.0 (Dec 06, 2020)
 -   Add **Change Events** support (thanks [Adam Vaughan](https://github.com/adamvaughan)!)
 -   Bug fixes
+-   <<< **THIS VERSION BREAKS BACKWARDS COMPATIBILITY WITH EARLIER VERSIONS** >>>
 
 #### Version 0.4.1 (Mar 12, 2019)
 
