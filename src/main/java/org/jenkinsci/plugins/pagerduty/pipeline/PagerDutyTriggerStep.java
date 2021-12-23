@@ -17,6 +17,8 @@ import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import java.util.Map;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
@@ -32,7 +34,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private boolean resolve;
     private String dedupKey;
     private String incidentSummary;
-    private JSONObject customDetails;
+    private Map<String, String> customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -76,12 +78,12 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
         this.incidentSummary = incidentSummary;
     }
 
-    public JSONObject getCustomDetails() {
+    public Map<String, String> getCustomDetails() {
         return customDetails;
     }
 
     @DataBoundSetter
-    public void setCustomDetails(JSONObject customDetails) {
+    public void setCustomDetails(Map<String, String> customDetails) {
         this.customDetails = customDetails;
     }
 
@@ -176,7 +178,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
                 listener.getLogger().println("Desc Exists");
             }
 
-            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary, step.customDetails, step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass);
+            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary, new JSONObject(step.customDetails), step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass);
 
             if (step.resolve) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);
