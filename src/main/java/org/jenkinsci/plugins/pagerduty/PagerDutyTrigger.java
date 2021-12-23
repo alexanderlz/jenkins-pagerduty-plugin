@@ -12,6 +12,7 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
+import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class PagerDutyTrigger extends Notifier {
     private String routingKey;
     private String dedupKey;
     private String incidentSummary;
+    private JSONObject customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -40,15 +42,17 @@ public class PagerDutyTrigger extends Notifier {
     private boolean triggerOnNotBuilt;
 
     @DataBoundConstructor
-    public PagerDutyTrigger(String routingKey, String dedupKey, String incidentSummary, String incidentSource,
-                            String incidentSeverity, String incidentComponent, String incidentGroup,
-                            String incidentClass, boolean resolveOnBackToNormal, boolean triggerOnSuccess,
-                            boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted,
-                            boolean triggerOnNotBuilt, Integer numPreviousBuildsToProbe) {
+    public PagerDutyTrigger(String routingKey, String dedupKey, String incidentSummary, 
+            JSONObject customDetails, String incidentSource, String incidentSeverity, 
+            String incidentComponent, String incidentGroup, String incidentClass,
+            boolean resolveOnBackToNormal, boolean triggerOnSuccess,
+            boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted,
+            boolean triggerOnNotBuilt, Integer numPreviousBuildsToProbe) {
         super();
         this.routingKey = routingKey;
         this.dedupKey = dedupKey;
         this.incidentSummary = incidentSummary;
+        this.customDetails = customDetails;
         this.incidentSource = incidentSource;
         this.incidentSeverity = incidentSeverity;
         this.incidentComponent = incidentComponent;
@@ -73,6 +77,10 @@ public class PagerDutyTrigger extends Notifier {
 
     public String getIncidentSummary() {
         return incidentSummary;
+    }
+
+    public JSONObject getCustomDetails() {
+        return customDetails;
     }
 
     public String getIncidentSource() {
@@ -128,7 +136,7 @@ public class PagerDutyTrigger extends Notifier {
     }
 
     protected Object readResolve() {
-//        this.getDescriptor().load();
+        // this.getDescriptor().load();
         return this;
     }
 
@@ -194,13 +202,12 @@ public class PagerDutyTrigger extends Notifier {
      * , hudson.Launcher, hudson.model.BuildListener)
      */
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
-                           BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         LinkedList<Result> resultProbe = generateResultProbe();
 
         boolean res = true;
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
-        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary,
+        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary, customDetails,
                 incidentSource, incidentSeverity, incidentComponent, incidentGroup, incidentClass);
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {

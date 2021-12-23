@@ -91,6 +91,7 @@ public class PagerDutyUtils {
             listener.getLogger().printf("severity %s%n", pdparams.getIncidentSeverity());
             Payload.Builder payloadBuilder = Payload.Builder.newBuilder();
             payloadBuilder.setSummary(pdparams.getIncidentSummary());
+            payloadBuilder.setCustomDetails(pdparams.getCustomDetails());
             payloadBuilder.setSource(pdparams.getIncidentSource());
             payloadBuilder.setSeverity(pdparams.getIncidentSeverity());
             payloadBuilder.setComponent(pdparams.getIncidentComponent());

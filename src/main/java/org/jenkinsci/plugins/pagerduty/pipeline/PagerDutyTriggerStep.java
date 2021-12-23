@@ -13,6 +13,7 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -31,6 +32,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private boolean resolve;
     private String dedupKey;
     private String incidentSummary;
+    private JSONObject customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -72,6 +74,15 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     @DataBoundSetter
     public void setIncidentSummary(String incidentSummary) {
         this.incidentSummary = incidentSummary;
+    }
+
+    public JSONObject getCustomDetails() {
+        return customDetails;
+    }
+
+    @DataBoundSetter
+    public void setCustomDetails(JSONObject customDetails) {
+        this.customDetails = customDetails;
     }
 
     public String getIncidentSource() {
@@ -165,8 +176,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
                 listener.getLogger().println("Desc Exists");
             }
 
-            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary,
-                    step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass);
+            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary, step.customDetails, step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass);
 
             if (step.resolve) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);
