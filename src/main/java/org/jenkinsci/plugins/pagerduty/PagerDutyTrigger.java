@@ -27,7 +27,7 @@ public class PagerDutyTrigger extends Notifier {
     private String routingKey;
     private String dedupKey;
     private String incidentSummary;
-    private JSONObject customDetails;
+    private String customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -43,7 +43,7 @@ public class PagerDutyTrigger extends Notifier {
 
     @DataBoundConstructor
     public PagerDutyTrigger(String routingKey, String dedupKey, String incidentSummary, 
-            JSONObject customDetails, String incidentSource, String incidentSeverity, 
+            String customDetails, String incidentSource, String incidentSeverity, 
             String incidentComponent, String incidentGroup, String incidentClass,
             boolean resolveOnBackToNormal, boolean triggerOnSuccess,
             boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted,
@@ -79,7 +79,7 @@ public class PagerDutyTrigger extends Notifier {
         return incidentSummary;
     }
 
-    public JSONObject getCustomDetails() {
+    public String getCustomDetails() {
         return customDetails;
     }
 
@@ -207,7 +207,7 @@ public class PagerDutyTrigger extends Notifier {
 
         boolean res = true;
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
-        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary, customDetails,
+        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary, new JSONObject(customDetails),
                 incidentSource, incidentSeverity, incidentComponent, incidentGroup, incidentClass);
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
