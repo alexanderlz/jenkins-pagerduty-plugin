@@ -102,7 +102,7 @@ NOTE - To include Custom Details in the trigger, specify them via a JSON string 
 Using the "PagerDuty Change Events" action, you can create a [change event](https://support.pagerduty.com/docs/change-events) when a job completes.
 
 
-![trigger options](https://raw.githubusercontent.com/jenkinsci/pagerduty-plugin/master/screen1.png)
+![trigger options](screen1.png)
 
 
 ### Create Change Events From A Freestyle Job
@@ -113,12 +113,12 @@ custom summary text field. If the summary text field is left blank,
 the default description of the Jenkins build job and its build number
 are used. Here's an example of a freestyle job configuration page:
 
-![freestyle job configuration](https://raw.githubusercontent.com/akrapfl/pagerduty-plugin/feature/freestyle-change-event-build-steps/screen4.png)
+![freestyle job configuration](screen4.png)
 
 The PagerDuty change event results of the above freestyle job are
 shown below:
 
-![freestyle change events](https://raw.githubusercontent.com/akrapfl/pagerduty-plugin/feature/freestyle-change-event-build-steps/screen3.png)
+![freestyle change events](screen3.png)
 
 
 ## Version History
