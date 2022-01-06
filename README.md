@@ -63,14 +63,19 @@ PLEASE NOTE -
 routing key and integration key are the same thing!
 
 
-`pagerduty(resolve: false, routingKey: "$ROUTING_KEY [NOT NULL]", 
+```
+pagerduty(resolve: false, routingKey: "$ROUTING_KEY [NOT NULL]", 
 dedupKey:"$DEDUP_KEY", incidentSummary:"$INCIDENT_SUMMARY", 
 incidentSource: "$INCIDENT_SOURCE", incidentSeverity:"$INCIDENT_SEVERITY",
-incidentComponent:"$INCIDENT_COMPONENT", incidentGroup:"$INCIDENT_GROUP", incidentClass:"$INCIDENT_CLASS")`
+incidentComponent:"$INCIDENT_COMPONENT", incidentGroup:"$INCIDENT_GROUP", incidentClass:"$INCIDENT_CLASS",
+customDetails: [key1: "value1", ... , keyN: "valueN"])
+```
 
 
 if resolve == false, pagerduty triggers an incident and returns the
 incidentKey
+
+NOTE - To include Custom Details in the step, specify them via a Map as shown above.
 
 #### Change Events
 
@@ -79,7 +84,7 @@ incidentKey
 ---
 You can choose one (or both) of the options to use PagerDuty
 
-![trigger options](https://raw.githubusercontent.com/jenkinsci/pagerduty-plugin/master/options.png)
+![trigger options](options.png)
 
 
 
@@ -87,7 +92,9 @@ You can choose one (or both) of the options to use PagerDuty
 
 Using the "PagerDuty Incident Trigger" action, you can trigger or resolve incidents based on the results of a job.
 
-![trigger options](https://raw.githubusercontent.com/jenkinsci/pagerduty-plugin/master/screen2.png)
+NOTE - To include Custom Details in the trigger, specify them via a JSON string in the textbox
+
+![trigger options](screen2.png)
 
 
 ### Create Change Events
