@@ -201,7 +201,7 @@ public class PagerDutyTrigger extends Notifier {
         boolean res = true;
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
         PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary,
-                incidentSource, incidentSeverity, incidentComponent, incidentGroup, incidentClass);
+                incidentSource, incidentSeverity, incidentComponent, incidentGroup, incidentClass, numPreviousBuildsToProbe, resolveOnBackToNormal, triggerOnSuccess, triggerOnFailure, triggerOnUnstable, triggerOnAborted, triggerOnNotBuilt);
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");
