@@ -36,6 +36,13 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private String incidentComponent;
     private String incidentGroup;
     private String incidentClass;
+    private Integer numPreviousBuildsToProbe;
+    private boolean resolveOnBackToNormal;
+    private boolean triggerOnSuccess;
+    private boolean triggerOnFailure;
+    private boolean triggerOnUnstable;
+    private boolean triggerOnAborted;
+    private boolean triggerOnNotBuilt;
 
     @DataBoundConstructor
     public PagerDutyTriggerStep(@Nonnull String routingKey) {
@@ -118,6 +125,68 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     public void setIncidentClass(String incidentClass) {
         this.incidentClass = incidentClass;
     }
+    public Integer getNumPreviousBuildsToProbe() {
+        return numPreviousBuildsToProbe;
+    }
+
+    @DataBoundSetter
+    public void setNumPreviousBuildsToProbe(Integer numPreviousBuildsToProbe) {
+        this.numPreviousBuildsToProbe = numPreviousBuildsToProbe;
+    }
+
+    public boolean isResolveOnBackToNormal() {
+        return resolveOnBackToNormal;
+    }
+
+    @DataBoundSetter
+    public void setResolveOnBackToNormal(boolean resolveOnBackToNormal) {
+        this.resolveOnBackToNormal = resolveOnBackToNormal;
+    }
+
+    public boolean isTriggerOnSuccess() {
+        return triggerOnSuccess;
+    }
+
+    @DataBoundSetter
+    public void setTriggerOnSuccess(boolean triggerOnSuccess) {
+        this.triggerOnSuccess = triggerOnSuccess;
+    }
+
+    @DataBoundSetter
+    public void setTriggerOnFailure(boolean triggerOnFailure) {
+        this.triggerOnFailure = triggerOnFailure;
+    }
+
+    public boolean isTriggerOnFailure() {
+        return triggerOnFailure;
+    }
+
+    @DataBoundSetter
+    public void setTriggerOnUnstable(boolean triggerOnUnstable) {
+        this.triggerOnUnstable = triggerOnUnstable;
+    }
+    
+    public boolean isTriggerOnUnstable() {
+        return triggerOnUnstable;
+    }
+
+    @DataBoundSetter
+    public void setTriggerOnAborted(boolean triggerOnAborted) {
+        this.triggerOnAborted = triggerOnAborted;
+    }
+    
+    public boolean isTriggerOnAborted() {
+        return triggerOnAborted;
+    }
+
+    @DataBoundSetter
+    public void setTriggerOnNotBuilt(boolean triggerOnNotBuilt) {
+        this.triggerOnNotBuilt = triggerOnNotBuilt;
+    }
+
+    public boolean isTriggerOnNotBuilt() {
+        return triggerOnNotBuilt;
+    }
 
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
@@ -166,7 +235,9 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
             }
 
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary,
-                    step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass);
+            step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass,
+            step.resolveOnBackToNormal, step.triggerOnSuccess, step.triggerOnFailure, step.triggerOnUnstable,
+            step.triggerOnAborted, step.triggerOnNotBuilt, step.numPreviousBuildsToProbe);
 
             if (step.resolve) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);

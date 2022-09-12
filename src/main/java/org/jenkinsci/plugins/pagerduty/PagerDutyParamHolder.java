@@ -23,6 +23,14 @@ public class PagerDutyParamHolder {
     private String incidentComponent;
     private String incidentGroup;
     private String incidentClass;
+    private Integer numPreviousBuildsToProbe;
+    private boolean resolveOnBackToNormal;
+    private boolean triggerOnSuccess;
+    private boolean triggerOnFailure;
+    private boolean triggerOnUnstable;
+    private boolean triggerOnAborted;
+    private boolean triggerOnNotBuilt;
+
 
     public PagerDutyParamHolder(String routingKey, String dedupKey, String incidentSummary, String incidentSource, String incidentSeverity, String incidentComponent, String incidentGroup, String incidentClass) {
         this.routingKey = routingKey;
@@ -33,6 +41,13 @@ public class PagerDutyParamHolder {
         this.incidentComponent = incidentComponent;
         this.incidentGroup = incidentGroup;
         this.incidentClass = incidentClass;
+        this.numPreviousBuildsToProbe = numPreviousBuildsToProbe;
+        this.resolveOnBackToNormal = resolveOnBackToNormal;
+        this.triggerOnSuccess = triggerOnSuccess;
+        this.triggerOnFailure = triggerOnFailure;
+        this.triggerOnUnstable = triggerOnUnstable;
+        this.triggerOnAborted = triggerOnAborted;
+        this.triggerOnNotBuilt = triggerOnNotBuilt;
     }
 
     public String getRoutingKey() {
@@ -100,6 +115,62 @@ public class PagerDutyParamHolder {
 
     public void setIncidentClass(String incidentClass) {
         this.incidentClass = incidentClass;
+    }
+
+    public Integer getNumPreviousBuildsToProbe() {
+        return numPreviousBuildsToProbe;
+    }
+
+    public void setNumPreviousBuildsToProbe(Integer numPreviousBuildsToProbe) {
+        this.numPreviousBuildsToProbe = numPreviousBuildsToProbe;
+    }
+
+    public boolean isResolveOnBackToNormal() {
+        return resolveOnBackToNormal;
+    }
+
+    public void setResolveOnBackToNormal(boolean resolveOnBackToNormal) {
+        this.resolveOnBackToNormal = resolveOnBackToNormal;
+    }
+
+    public boolean isTriggerOnSuccess() {
+        return triggerOnSuccess;
+    }
+
+    public void setTriggerOnSuccess(boolean triggerOnSuccess) {
+        this.triggerOnSuccess = triggerOnSuccess;
+    }
+
+    public void setTriggerOnFailure(boolean triggerOnFailure) {
+        this.triggerOnFailure = triggerOnFailure;
+    }
+
+    public boolean isTriggerOnFailure() {
+        return triggerOnFailure;
+    }
+
+    public void setTriggerOnUnstable(boolean triggerOnUnstable) {
+        this.triggerOnUnstable = triggerOnUnstable;
+    }
+    
+    public boolean isTriggerOnUnstable() {
+        return triggerOnUnstable;
+    }
+
+    public void setTriggerOnAborted(boolean triggerOnAborted) {
+        this.triggerOnAborted = triggerOnAborted;
+    }
+    
+    public boolean isTriggerOnAborted() {
+        return triggerOnAborted;
+    }
+
+    public void setTriggerOnNotBuilt(boolean triggerOnNotBuilt) {
+        this.triggerOnNotBuilt = triggerOnNotBuilt;
+    }
+
+    public boolean isTriggerOnNotBuilt() {
+        return triggerOnNotBuilt;
     }
 
     public void tokenReplaceWorkflow(Run<?, ?> run, FilePath workspace, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
