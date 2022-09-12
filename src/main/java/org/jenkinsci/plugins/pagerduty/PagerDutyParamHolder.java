@@ -32,7 +32,7 @@ public class PagerDutyParamHolder {
     private boolean triggerOnNotBuilt;
 
 
-    public PagerDutyParamHolder(String routingKey, String dedupKey, String incidentSummary, String incidentSource, String incidentSeverity, String incidentComponent, String incidentGroup, String incidentClass) {
+    public PagerDutyParamHolder(String routingKey, String dedupKey, String incidentSummary, String incidentSource, String incidentSeverity, String incidentComponent, String incidentGroup, String incidentClass, Integer numPreviousBuildsToProbe, boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted, boolean triggerOnNotBuilt) {
         this.routingKey = routingKey;
         this.dedupKey = dedupKey;
         this.incidentSummary = incidentSummary;
