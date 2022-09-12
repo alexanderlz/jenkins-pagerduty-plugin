@@ -236,8 +236,8 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
             PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary,
             step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass,
-            step.resolveOnBackToNormal, step.triggerOnSuccess, step.triggerOnFailure, step.triggerOnUnstable,
-            step.triggerOnAborted, step.triggerOnNotBuilt, step.numPreviousBuildsToProbe);
+            step.numPreviousBuildsToProbe, step.resolveOnBackToNormal, step.triggerOnSuccess, step.triggerOnFailure,
+            step.triggerOnUnstable, step.triggerOnAborted, step.triggerOnNotBuilt);
 
             if (step.resolve) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);
