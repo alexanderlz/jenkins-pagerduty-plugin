@@ -23,6 +23,7 @@ public class PagerDutyChangeEventStep extends AbstractStepImpl {
   @Nonnull
   private final String integrationKey;
   private   String summaryText ;
+  private String customDetails;
 
   @DataBoundConstructor
   public PagerDutyChangeEventStep(@Nonnull String integrationKey) {
@@ -35,13 +36,22 @@ public class PagerDutyChangeEventStep extends AbstractStepImpl {
 	  this.summaryText = summaryText;
   }
 
+  @DataBoundSetter
+  public void setCustomDetails(String customDetails) {
+    this.customDetails = customDetails;
+  }
+
   @Nonnull
   public String getIntegrationKey() {
     return integrationKey;
   }
   public String getSummaryText() {
-	    return summaryText;
-	  }
+    return summaryText;
+  }
+  public String getCustomDetails() {
+    return customDetails;
+  }
+
   @Extension
   public static class DescriptorImpl extends AbstractStepDescriptorImpl {
     public DescriptorImpl() {
@@ -73,9 +83,7 @@ public class PagerDutyChangeEventStep extends AbstractStepImpl {
 
     @Override
     protected Void run() {
-    	
-    	
-      new ChangeEventSender().send(step.integrationKey, step.summaryText, build, listener);
+      new ChangeEventSender().send(step.integrationKey, step.summaryText, step.customDetails, build, listener);
     	
       return null;
     }

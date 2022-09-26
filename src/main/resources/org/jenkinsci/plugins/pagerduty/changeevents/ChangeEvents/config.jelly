@@ -3,7 +3,10 @@
     <f:entry title="Integration Key" field="integrationKey">
         <f:textbox />
     </f:entry>
-     <f:entry title="Summary Text" field="summaryText">
+    <f:entry title="Summary Text" field="summaryText">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Custom Details" field="customDetails">
         <f:textbox />
     </f:entry>
     <f:entry title="Create Change Event on SUCCESS" field="createOnSuccess">
