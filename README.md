@@ -45,7 +45,7 @@ Once you have an integration key you can add the appropriate action to your Jenk
 ## IMPORTANT!
 
 
- **There is a beak in backwards compatibility between versions 4.x.x and 6.x.x**
+ **There is a break in backwards compatibility between versions 4.x.x and 6.x.x**
 
  if you are migrating from earlier versions to 6.x.x and above note the following changes:
 
@@ -87,7 +87,7 @@ You can choose one (or both) of the options to use PagerDuty
 
 Using the "PagerDuty Incident Trigger" action, you can trigger or resolve incidents based on the results of a job.
 
-![trigger options](https://raw.githubusercontent.com/jenkinsci/pagerduty-plugin/master/screen2.png)
+![trigger options](screen2.png)
 
 
 ### Create Change Events
@@ -95,23 +95,27 @@ Using the "PagerDuty Incident Trigger" action, you can trigger or resolve incide
 Using the "PagerDuty Change Events" action, you can create a [change event](https://support.pagerduty.com/docs/change-events) when a job completes.
 
 
-![trigger options](https://raw.githubusercontent.com/jenkinsci/pagerduty-plugin/master/screen1.png)
+![trigger options](screen1.png)
 
 
 ### Create Change Events From A Freestyle Job
 
 The configuration of a freestyle job allows for including PagerDuty
-change events as build steps by passing the integration key and a
-custom summary text field. If the summary text field is left blank,
+change events as build steps by passing the integration key, a
+custom summary text field and custom details in JSON format. If the summary text field is left blank,
 the default description of the Jenkins build job and its build number
-are used. Here's an example of a freestyle job configuration page:
+are used. Custom details are optional.  Any custom details provided will be merged into the default 
+custom detail fields (build number, cause, duration). Token substitution works on all fields.  Note in the post build
+version, you need to use a slightly different syntax.  Ex. ${ENV, var="PD_INTEGRATION_KEY"}  
 
-![freestyle job configuration](https://raw.githubusercontent.com/akrapfl/pagerduty-plugin/feature/freestyle-change-event-build-steps/screen4.png)
+Here's an example of a freestyle job configuration page:
+
+![freestyle job configuration](screen4.png)
 
 The PagerDuty change event results of the above freestyle job are
 shown below:
 
-![freestyle change events](https://raw.githubusercontent.com/akrapfl/pagerduty-plugin/feature/freestyle-change-event-build-steps/screen3.png)
+![freestyle change events](screen3.png)
 
 
 ## Version History

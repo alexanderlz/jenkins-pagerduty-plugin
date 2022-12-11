@@ -11,11 +11,7 @@ import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * Orchestrates generating a Change Event from the details of a build and sends
@@ -23,8 +19,13 @@ import java.util.TimeZone;
  */
 public class ChangeEventSender {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     
-    public final void send(String integrationKey, String summaryText, Run<?, ?> build, TaskListener listener) {
+    public final void send(String integrationKey,
+                           String summaryText,
+                           String customDetails,
+                           Run<?, ?> build,
+                           TaskListener listener) {
         try {
         	
         	ChangeEvent changeEvent = getChangeEvent(integrationKey,build);
@@ -33,8 +34,19 @@ public class ChangeEventSender {
         	{
         		 changeEvent.setSummary(summaryText);
         	}
-        	
-          
+
+            if(customDetails != null && !customDetails.equals(""))
+            {
+                try {
+                    Map<String, Object> customDetailsMap = objectMapper.readerFor(Map.class).readValue(customDetails);
+                    customDetailsMap.putAll(changeEvent.getCustomDetails());
+                    changeEvent.setCustomDetails(customDetailsMap);
+                } catch (JsonProcessingException jpe) {
+                    listener.getLogger().println("User provided custom details were not valid JSON after " +
+                            "token substitution, Leaving them off the request");
+                }
+            }
+
             String json = convertToJSON(changeEvent);
 
             listener.getLogger().println("Generated payload for PagerDuty Change Events");
@@ -50,7 +62,7 @@ public class ChangeEventSender {
 
     private ChangeEvent getChangeEvent(String integrationKey, Run<?, ?> build) {
         String summary = getSummary(build);
-        HashMap<String, ?> customDetails = getCustomDetails(build);
+        Map<String, ?> customDetails = getCustomDetails(build);
         ChangeEvent.Link buildLink = getBuildLink(build);
 
         return new ChangeEvent.Builder().setIntegrationKey(integrationKey).setSummary(summary)
@@ -73,8 +85,8 @@ public class ChangeEventSender {
         return message;
     }
 
-    private HashMap<String, ?> getCustomDetails(Run<?, ?> build) {
-        HashMap<String, Object> customDetails = new HashMap<>();
+    private Map<String, ?> getCustomDetails(Run<?, ?> build) {
+        Map<String, Object> customDetails = new HashMap<>();
         Result result = build.getResult();
 
         if (build.getDescription() != null) {
@@ -128,7 +140,6 @@ public class ChangeEventSender {
         event.put("payload", payload);
         event.put("links", links);
 
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(event);
+        return objectMapper.writer().writeValueAsString(event);
     }
 }

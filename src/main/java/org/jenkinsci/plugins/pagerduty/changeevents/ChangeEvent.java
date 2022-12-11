@@ -1,10 +1,7 @@
 package org.jenkinsci.plugins.pagerduty.changeevents;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Represents the data that can be provided to the Change Events API.
@@ -35,7 +32,7 @@ public class ChangeEvent {
     /**
      * Additional information about the change.
      */
-    private HashMap<String, ?> customDetails;
+    private Map<String, ?> customDetails;
 
     /**
      * Links related to the change.
@@ -81,11 +78,11 @@ public class ChangeEvent {
         this.timestamp = (Date) timestamp.clone();
     }
 
-    public HashMap<String, ?> getCustomDetails() {
+    public Map<String, ?> getCustomDetails() {
         return customDetails;
     }
 
-    public void setCustomDetails(HashMap<String, ?> customDetails) {
+    public void setCustomDetails(Map<String, ?> customDetails) {
         this.customDetails = customDetails;
     }
 
@@ -167,7 +164,7 @@ public class ChangeEvent {
             return this;
         }
 
-        public Builder setCustomDetails(HashMap<String, ?> customDetails) {
+        public Builder setCustomDetails(Map<String, ?> customDetails) {
             changeEvent.setCustomDetails(customDetails);
             return this;
         }
