@@ -63,14 +63,19 @@ PLEASE NOTE -
 routing key and integration key are the same thing!
 
 
-`pagerduty(resolve: false, routingKey: "$ROUTING_KEY [NOT NULL]", 
+```
+pagerduty(resolve: false, routingKey: "$ROUTING_KEY [NOT NULL]", 
 dedupKey:"$DEDUP_KEY", incidentSummary:"$INCIDENT_SUMMARY", 
 incidentSource: "$INCIDENT_SOURCE", incidentSeverity:"$INCIDENT_SEVERITY",
-incidentComponent:"$INCIDENT_COMPONENT", incidentGroup:"$INCIDENT_GROUP", incidentClass:"$INCIDENT_CLASS")`
+incidentComponent:"$INCIDENT_COMPONENT", incidentGroup:"$INCIDENT_GROUP", incidentClass:"$INCIDENT_CLASS",
+customDetails: [key1: "value1", ... , keyN: "valueN"])
+```
 
 
 if resolve == false, pagerduty triggers an incident and returns the
 incidentKey
+
+NOTE - To include Custom Details in the step, specify them via a Map as shown above.
 
 #### Change Events
 
@@ -79,13 +84,15 @@ incidentKey
 ---
 You can choose one (or both) of the options to use PagerDuty
 
-![trigger options](https://raw.githubusercontent.com/jenkinsci/pagerduty-plugin/master/options.png)
+![trigger options](options.png)
 
 
 
 ### Trigger/Resolve Incidents
 
 Using the "PagerDuty Incident Trigger" action, you can trigger or resolve incidents based on the results of a job.
+
+NOTE - To include Custom Details in the trigger, specify them via a JSON string in the textbox
 
 ![trigger options](screen2.png)
 
@@ -107,6 +114,7 @@ the default description of the Jenkins build job and its build number
 are used. Custom details are optional.  Any custom details provided will be merged into the default 
 custom detail fields (build number, cause, duration). Token substitution works on all fields.  Note in the post build
 version, you need to use a slightly different syntax.  Ex. ${ENV, var="PD_INTEGRATION_KEY"}  
+
 
 Here's an example of a freestyle job configuration page:
 

@@ -13,8 +13,11 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -31,6 +34,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private boolean resolve;
     private String dedupKey;
     private String incidentSummary;
+    private Map<String, String> customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -79,6 +83,15 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     @DataBoundSetter
     public void setIncidentSummary(String incidentSummary) {
         this.incidentSummary = incidentSummary;
+    }
+
+    public Map<String, String> getCustomDetails() {
+        return customDetails;
+    }
+
+    @DataBoundSetter
+    public void setCustomDetails(Map<String, String> customDetails) {
+        this.customDetails = customDetails;
     }
 
     public String getIncidentSource() {
@@ -234,7 +247,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
                 listener.getLogger().println("Desc Exists");
             }
 
-            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary,
+            PagerDutyParamHolder pdparams = new PagerDutyParamHolder(step.routingKey, step.dedupKey, step.incidentSummary, new JSONObject(step.customDetails),
             step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass,
             step.numPreviousBuildsToProbe, step.resolveOnBackToNormal, step.triggerOnSuccess, step.triggerOnFailure,
             step.triggerOnUnstable, step.triggerOnAborted, step.triggerOnNotBuilt);

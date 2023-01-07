@@ -7,6 +7,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -18,6 +19,7 @@ public class PagerDutyParamHolder {
     private String routingKey;
     private String dedupKey;
     private String incidentSummary;
+    private JSONObject customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -32,10 +34,11 @@ public class PagerDutyParamHolder {
     private boolean triggerOnNotBuilt;
 
 
-    public PagerDutyParamHolder(String routingKey, String dedupKey, String incidentSummary, String incidentSource, String incidentSeverity, String incidentComponent, String incidentGroup, String incidentClass, Integer numPreviousBuildsToProbe, boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted, boolean triggerOnNotBuilt) {
+    public PagerDutyParamHolder(String routingKey, String dedupKey, String incidentSummary, JSONObject customDetails, String incidentSource, String incidentSeverity, String incidentComponent, String incidentGroup, String incidentClass, Integer numPreviousBuildsToProbe, boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted, boolean triggerOnNotBuilt) {
         this.routingKey = routingKey;
         this.dedupKey = dedupKey;
         this.incidentSummary = incidentSummary;
+        this.customDetails = customDetails;
         this.incidentSource = incidentSource;
         this.incidentSeverity = incidentSeverity;
         this.incidentComponent = incidentComponent;
@@ -72,6 +75,14 @@ public class PagerDutyParamHolder {
 
     public void setIncidentSummary(String incidentSummary) {
         this.incidentSummary = incidentSummary;
+    }
+
+    public JSONObject getCustomDetails() {
+        return customDetails;
+    }
+
+    public void setCustomDetails(String customDetails) {
+        this.customDetails = new JSONObject(customDetails);
     }
 
     public String getIncidentSource() {
@@ -177,6 +188,7 @@ public class PagerDutyParamHolder {
         this.setRoutingKey(TokenMacro.expandAll(run, workspace, listener, this.routingKey));
         this.setDedupKey(TokenMacro.expandAll(run, workspace, listener, this.dedupKey));
         this.setIncidentSummary(TokenMacro.expandAll(run, workspace, listener, this.incidentSummary));
+        this.setCustomDetails(TokenMacro.expandAll(run, workspace, listener,  this.customDetails.toString()));
         this.setIncidentSource(TokenMacro.expandAll(run, workspace, listener, this.incidentSource));
         this.setIncidentSeverity(TokenMacro.expandAll(run, workspace, listener, this.incidentSeverity));
         this.setIncidentComponent(TokenMacro.expandAll(run, workspace, listener, this.incidentComponent));
@@ -188,6 +200,7 @@ public class PagerDutyParamHolder {
         this.setRoutingKey(TokenMacro.expandAll(build, listener, this.routingKey));
         this.setDedupKey(TokenMacro.expandAll(build, listener, this.dedupKey));
         this.setIncidentSummary(TokenMacro.expandAll(build, listener, this.incidentSummary));
+        this.setCustomDetails(TokenMacro.expandAll(build, listener,  this.customDetails.toString()));
         this.setIncidentSource(TokenMacro.expandAll(build, listener, this.incidentSource));
         this.setIncidentSeverity(TokenMacro.expandAll(build, listener, this.incidentSeverity));
         this.setIncidentComponent(TokenMacro.expandAll(build, listener, this.incidentComponent));
