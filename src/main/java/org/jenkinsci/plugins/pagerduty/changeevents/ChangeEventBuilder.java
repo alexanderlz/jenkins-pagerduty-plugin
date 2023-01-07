@@ -1,5 +1,9 @@
 package org.jenkinsci.plugins.pagerduty.changeevents;
 
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -33,6 +37,9 @@ import javax.annotation.Nonnull;
  */
 
 public class ChangeEventBuilder extends Builder  {
+
+	private static final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * The integration key that identifies the service the change occurred on.
      */
@@ -42,6 +49,11 @@ public class ChangeEventBuilder extends Builder  {
      * custom event data that can be passed on to set as summary
      */
     private   String summaryText ;
+
+	/**
+	 * data that can be passed on to set as custom details
+	 */
+	private   String customDetails ;
 
     @DataBoundConstructor
     public ChangeEventBuilder(String integrationKey) {
@@ -56,7 +68,19 @@ public class ChangeEventBuilder extends Builder  {
 		} catch (IOException | MacroEvaluationException | InterruptedException e) {
 			listener.getLogger().println("Error replacing summaryText tokens.");
 		}
-		new ChangeEventSender().send(integrationKey, expandedSummaryText, build, listener);
+		String expandedIntegrationKey = integrationKey;
+		try {
+			expandedIntegrationKey = TokenMacro.expandAll(build, listener, integrationKey);
+		} catch (IOException | MacroEvaluationException | InterruptedException e) {
+			listener.getLogger().println("Error replacing integrationKey tokens.");
+		}
+		String expandedCustomDetails = customDetails;
+		try {
+			expandedCustomDetails = TokenMacro.expandAll(build, listener, customDetails);
+		} catch (IOException | MacroEvaluationException | InterruptedException e) {
+			listener.getLogger().println("Error replacing customDetails tokens.");
+		}
+		new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, build, listener);
 		return true;
     }
 
@@ -73,39 +97,71 @@ public class ChangeEventBuilder extends Builder  {
 	this.summaryText = summaryText;
     }
 
+	@DataBoundSetter
+	public void setCustomDetails(String customDetails) {
+		this.customDetails = customDetails;
+	}
+
+	public String getCustomDetails() {
+		return customDetails;
+	}
+
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-	@Nonnull
-	public String getDisplayName() {
-	    return "PagerDuty Change Event";
-	}
+		@Nonnull
+		public String getDisplayName() {
+			return "PagerDuty Change Event";
+		}
 
-	@Override
-	public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-	    return true;
-	}
+		@Override
+		public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+			return true;
+		}
 
-	/**
-	 * Provides basic validation of integration keys.
-	 *
-	 * Just ensures they are the correct length and only include allowed characters.
-	 *
-	 * @param value The integration key
-	 * @return Whether or not the integration key is valid
-	 */
-	public FormValidation doCheckIntegrationKey(@QueryParameter String value) {
-	    Pattern pattern = Pattern.compile("^[0-9a-z]{32}$");
-	    Matcher matcher = pattern.matcher(value);
+		/**
+		 * Provides basic validation of integration keys.
+		 *
+		 * Just ensures they are the correct length and only include allowed characters.
+		 *
+		 * @param value The integration key
+		 * @return Whether or not the integration key is valid
+		 */
+		public FormValidation doCheckIntegrationKey(@QueryParameter String value) {
+			if (value.startsWith("$")) {
+				// token expansion so don't validate on length
+				return FormValidation.ok();
+			}
 
-	    if (matcher.matches()) {
-		return FormValidation.ok();
-	    }
+			Pattern pattern = Pattern.compile("^[0-9a-z]{32}$");
+			Matcher matcher = pattern.matcher(value);
 
-	    if (value.length() != 32) {
-		return FormValidation.error("Must be 32 characters long");
-	    }
+			if (matcher.matches()) {
+			return FormValidation.ok();
+			}
 
-	    return FormValidation.error("Must only be letters and digits");
-	}
+			if (value.length() != 32) {
+			return FormValidation.error("Must be 32 characters long");
+			}
+
+			return FormValidation.error("Must only be letters and digits");
+		}
+
+		/**
+		 * Provides basic validation of custom details to ensure they are valid JSON
+		 *
+		 * @param value The custom details
+		 * @return Whether or not the custom details are valid JSON
+		 */
+		public FormValidation doCheckCustomDetails(@QueryParameter String value) {
+			try {
+				objectMapper.reader(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY).readTree(value);
+			} catch (JsonProcessingException jpe) {
+				return FormValidation.error("Must be valid JSON");
+			} catch (IOException ioe) {
+				return FormValidation.error("Must be valid JSON");
+			}
+
+			return FormValidation.ok();
+		}
     }
 }

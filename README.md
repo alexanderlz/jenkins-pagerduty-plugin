@@ -45,7 +45,7 @@ Once you have an integration key you can add the appropriate action to your Jenk
 ## IMPORTANT!
 
 
- **There is a beak in backwards compatibility between versions 4.x.x and 6.x.x**
+ **There is a break in backwards compatibility between versions 4.x.x and 6.x.x**
 
  if you are migrating from earlier versions to 6.x.x and above note the following changes:
 
@@ -108,10 +108,15 @@ Using the "PagerDuty Change Events" action, you can create a [change event](http
 ### Create Change Events From A Freestyle Job
 
 The configuration of a freestyle job allows for including PagerDuty
-change events as build steps by passing the integration key and a
-custom summary text field. If the summary text field is left blank,
+change events as build steps by passing the integration key, a
+custom summary text field and custom details in JSON format. If the summary text field is left blank,
 the default description of the Jenkins build job and its build number
-are used. Here's an example of a freestyle job configuration page:
+are used. Custom details are optional.  Any custom details provided will be merged into the default 
+custom detail fields (build number, cause, duration). Token substitution works on all fields.  Note in the post build
+version, you need to use a slightly different syntax.  Ex. ${ENV, var="PD_INTEGRATION_KEY"}  
+
+
+Here's an example of a freestyle job configuration page:
 
 ![freestyle job configuration](screen4.png)
 

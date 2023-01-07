@@ -1,22 +1,25 @@
 package org.jenkinsci.plugins.pagerduty.changeevents;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractProject;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +34,9 @@ import javax.annotation.Nonnull;
  * See https://developer.pagerduty.com/docs/events-api-v2/send-change-events/
  */
 public class ChangeEvents extends Notifier implements SimpleBuildStep {
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * The integration key that identifies the service the change occurred on.
      */
@@ -65,6 +71,11 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
      */
     private   String summaryText ;
 
+    /**
+     * custom event data that can be passed on to set as custom details
+     */
+    private   String customDetails ;
+
     @DataBoundConstructor
     public ChangeEvents(String integrationKey) {
         this.integrationKey = integrationKey;
@@ -78,10 +89,27 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
         if ((result == Result.SUCCESS && createOnSuccess) || (result == Result.FAILURE && createOnFailure)
                 || (result == Result.UNSTABLE && createOnUnstable) || (result == Result.ABORTED && createOnAborted)
                 || (result == Result.NOT_BUILT && createOnNotBuilt)) {
-        	
-        	
-        	new ChangeEventSender().send(integrationKey, summaryText, build, listener);
-        	
+
+            String expandedSummaryText = summaryText;
+            try {
+                expandedSummaryText = TokenMacro.expand(build, workspace, listener, summaryText);
+            } catch (IOException | MacroEvaluationException | InterruptedException e) {
+                listener.getLogger().println("Error replacing summaryText tokens.");
+            }
+            String expandedIntegrationKey = integrationKey;
+            try {
+                expandedIntegrationKey = TokenMacro.expand(build, workspace, listener, integrationKey);
+            } catch (IOException | MacroEvaluationException | InterruptedException e) {
+                listener.getLogger().println("Error replacing integrationKey tokens.");
+            }
+            String expandedCustomDetails = customDetails;
+            try {
+                expandedCustomDetails = TokenMacro.expand(build, workspace, listener, customDetails);
+            } catch (IOException | MacroEvaluationException | InterruptedException e) {
+                listener.getLogger().println("Error replacing customDetails tokens.");
+            }
+            new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, build, listener);
+
         }
 
     }
@@ -96,7 +124,21 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
     
     public String getSummaryText() {
 	    return summaryText;
-	  }
+    }
+
+    @DataBoundSetter
+    public void setSummaryText(String summaryText) {
+        this.summaryText = summaryText;
+    }
+
+    public String getCustomDetails() {
+        return  customDetails;
+    }
+
+    @DataBoundSetter
+    public void setCustomDetails(String customDetails) {
+        this.customDetails = customDetails;
+    }
 
     public boolean getCreateOnSuccess() {
         return createOnSuccess;
@@ -142,11 +184,6 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
     public void setCreateOnNotBuilt(boolean createOnNotBuilt) {
         this.createOnNotBuilt = createOnNotBuilt;
     }
-    
-    @DataBoundSetter
-    public void setSummaryText(String summaryText) {
-  	  this.summaryText = summaryText;
-    }
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
@@ -163,12 +200,18 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
         /**
          * Provides basic validation of integration keys.
          *
-         * Just ensures they are the correct length and only include allowed characters.
+         * Ensures the key is either a token to be substituted, or it is the correct length
+         * * and only includes allowed characters.
          *
          * @param value The integration key
          * @return Whether or not the integration key is valid
          */
         public FormValidation doCheckIntegrationKey(@QueryParameter String value) {
+            if (value.startsWith("$")) {
+                // token expansion so don't validate on length
+                return FormValidation.ok();
+            }
+
             Pattern pattern = Pattern.compile("^[0-9a-z]{32}$");
             Matcher matcher = pattern.matcher(value);
 
@@ -181,6 +224,32 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
             }
 
             return FormValidation.error("Must only be letters and digits");
+        }
+
+        /**
+         * Provides basic validation of custom details.
+         *
+         * Ensures the given string is valid JSON (ignoring token substitution)
+         *
+         * @param value The custom details
+         * @return Whether or not the custom details are valid JSON
+         */
+        public FormValidation doCheckCustomDetails(@QueryParameter String value) {
+            // the syntax for token macro breaks the JSON ( ${ENV, var="macro"} ), so replace token macros
+            // with empty string just for validation
+            try {
+                String valueWithMacrosRemoved =
+                        Pattern.compile("\\$\\{ENV,(.*?)}").matcher(value).replaceAll("");
+                objectMapper.reader(
+                        DeserializationFeature.FAIL_ON_TRAILING_TOKENS,
+                        DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY).readTree(valueWithMacrosRemoved);
+            } catch (JsonProcessingException jpe) {
+                return FormValidation.error("Must be valid JSON");
+            } catch (IOException ioe) {
+                return FormValidation.error("Must be valid JSON");
+            }
+
+            return FormValidation.ok();
         }
     }
 }

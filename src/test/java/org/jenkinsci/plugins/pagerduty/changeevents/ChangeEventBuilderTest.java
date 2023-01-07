@@ -11,6 +11,7 @@ import hudson.Launcher;
 import hudson.model.BuildListener;
 import hudson.model.Result;
 
+import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 
 import org.junit.BeforeClass;
@@ -85,6 +86,7 @@ public class ChangeEventBuilderTest {
 		when(build.getNumber()).thenReturn(99);
 		changeEventBuilder = new ChangeEventBuilder("JUNIT_TEST_INTEGRATION_KEY");
 		changeEventBuilder.setSummaryText("testjobname built successfully");
+		changeEventBuilder.setCustomDetails("{\"field\":\"value\"}");
 		when(urlProvider.get().getRunURL(build)).thenReturn("http://unitest-jenkins/job/testjobname/99/display/redirect");
 
 		//trigger build changeevent
@@ -94,7 +96,7 @@ public class ChangeEventBuilderTest {
 		PowerMockito.verifyStatic(ChangeEventsAPI.class, times(1));
 		ChangeEventsAPI.send(jsonArg.capture());
 		//Expecting jsonArg to contain a valid JSON string similar to the following
-		//{"payload":{"summary":"testjobname built successfully","source":"Jenkins","custom_details":{"duration":null,"build_number":0},"timestamp":"2021-03-17T21:45:24.808Z"},"links":[{"href":"http://www.testurl.com","text":"View on Jenkins"}],"routing_key":"testIntegration key"}
+		//{"payload":{"summary":"testjobname built successfully","source":"Jenkins","custom_details":{"duration":null,"build_number":0, "field":"value"},"timestamp":"2021-03-17T21:45:24.808Z"},"links":[{"href":"http://www.testurl.com","text":"View on Jenkins"}],"routing_key":"testIntegration key"}
 
 		//Parse JSON and perform assertions
 		JSONObject sendBody = new JSONObject(jsonArg.getValue());
@@ -102,10 +104,12 @@ public class ChangeEventBuilderTest {
 		String summary = sendBody.getJSONObject("payload").getString("summary");
 		String routingKey = sendBody.getString("routing_key");
 		int buildNumber = sendBody.getJSONObject("payload").getJSONObject("custom_details").getInt("build_number");
+		String customDetailValue = sendBody.getJSONObject("payload").getJSONObject("custom_details").getString("field");
 
 		assertEquals("http://unitest-jenkins/job/testjobname/99/display/redirect", href);
 		assertEquals("testjobname built successfully", summary);
 		assertEquals(99, buildNumber);
+		assertEquals("value", customDetailValue);
 		assertEquals("JUNIT_TEST_INTEGRATION_KEY", routingKey);
 	}
 
@@ -141,8 +145,41 @@ public class ChangeEventBuilderTest {
 		String summary = sendBody.getJSONObject("payload").getString("summary");
 
 		assertEquals("somepath/junit#99: SUCCESS", summary);
-	} 
+	}
 
+	@Test
+	public void testIntegrationKeyValidation() throws IOException {
+		ChangeEventBuilder.DescriptorImpl descriptor = new ChangeEventBuilder.DescriptorImpl();
+
+		String validIntegrationKeyByLength = "abcdefghijklmnopqrstuvwxyz123456";
+		FormValidation formValidation = descriptor.doCheckIntegrationKey(validIntegrationKeyByLength);
+		assertEquals("Form validation did not pass when it should have", FormValidation.Kind.OK, formValidation.kind);
+
+		String validIntegrationKeyToken = "${token}";
+		formValidation = descriptor.doCheckIntegrationKey(validIntegrationKeyToken);
+		assertEquals("Form validation did not pass when it should have", FormValidation.Kind.OK, formValidation.kind);
+
+		String invalidIntegrationKeyWrongLength= "123456789";
+		formValidation = descriptor.doCheckIntegrationKey(invalidIntegrationKeyWrongLength);
+		assertEquals("Form validation passed when it should not have", FormValidation.Kind.ERROR, formValidation.kind);
+
+		String invalidIntegrationKeyInvalidCharacters = "✓bcdefghijklmnopqrstuvwxyz12345✓";
+		formValidation = descriptor.doCheckIntegrationKey(invalidIntegrationKeyInvalidCharacters);
+		assertEquals("Form validation passed when it should not have", FormValidation.Kind.ERROR, formValidation.kind);
+	}
+
+	@Test
+	public void testCustomDetailsValidation() throws IOException {
+		ChangeEventBuilder.DescriptorImpl descriptor = new ChangeEventBuilder.DescriptorImpl();
+
+		String validCustomDetailsJson = "{\"field\":\"value\"}";
+		FormValidation formValidation = descriptor.doCheckCustomDetails(validCustomDetailsJson);
+		assertEquals("Form validation did not pass when it should have", FormValidation.Kind.OK, formValidation.kind);
+
+		String invalidCustomDetailsJson = "this is not json!";
+		formValidation = descriptor.doCheckCustomDetails(invalidCustomDetailsJson);
+		assertEquals("Form validation passed when it should not have", FormValidation.Kind.ERROR, formValidation.kind);
+	}
 // this is sample json
 //
 //	     ChangeEventsAPI.send("{\n"
