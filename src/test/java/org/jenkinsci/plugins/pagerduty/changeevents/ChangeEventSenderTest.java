@@ -22,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -74,7 +75,16 @@ public class ChangeEventSenderTest {
         testSend(null, customDetails);
     }
 
+    @Test
+    public void testSendWithCustomPagerDutyDomain() throws IOException {
+        testSend(null, null, "events.eu.pagerduty.com");
+    }
+
     private void testSend(String summaryText, String customDetails) throws IOException {
+        testSend(summaryText, customDetails, null);
+    }
+
+    private void testSend(String summaryText, String customDetails, String pagerDutyDomain) throws IOException {
         String integrationKey = "integrationKey";
         String buildDisplayName = "testing - ";
         String buildDescription = "test build";
@@ -105,10 +115,11 @@ public class ChangeEventSenderTest {
         }
 
         ArgumentCaptor<String> jsonArg = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> domainArg = ArgumentCaptor.forClass(String.class);
 
         //static method mocks using PowerMockito
         PowerMockito.mockStatic(ChangeEventsAPI.class);
-        when(ChangeEventsAPI.send(anyString())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
+        when(ChangeEventsAPI.send(anyString(), any())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
         PowerMockito.mockStatic(DisplayURLProvider.class);
         when(DisplayURLProvider.get()).thenReturn(urlProvider);
         when(build.getFullDisplayName()).thenReturn(buildDisplayName);
@@ -123,10 +134,11 @@ public class ChangeEventSenderTest {
         when(urlProvider.get().getRunURL(build)).thenReturn(expectedHref);
 
         ChangeEventSender changeEventSender = new ChangeEventSender();
-        changeEventSender.send(integrationKey, summaryText, customDetails, build, listener);
+        changeEventSender.send(integrationKey, summaryText, customDetails, pagerDutyDomain, build, listener);
 
         PowerMockito.verifyStatic(ChangeEventsAPI.class, times(1));
-        ChangeEventsAPI.send(jsonArg.capture());
+        ChangeEventsAPI.send(jsonArg.capture(), domainArg.capture());
+        assertEquals(pagerDutyDomain, domainArg.getValue());
 
         //Parse JSON and perform assertions
         JSONObject sendBody = new JSONObject(jsonArg.getValue());

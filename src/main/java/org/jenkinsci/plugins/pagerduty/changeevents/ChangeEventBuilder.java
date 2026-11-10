@@ -55,6 +55,11 @@ public class ChangeEventBuilder extends Builder  {
 	 */
 	private   String customDetails ;
 
+	/**
+	 * The PagerDuty domain to send events to. Defaults to events.pagerduty.com when empty.
+	 */
+	private String pagerDutyDomain;
+
     @DataBoundConstructor
     public ChangeEventBuilder(String integrationKey) {
 	this.integrationKey = integrationKey;
@@ -80,7 +85,13 @@ public class ChangeEventBuilder extends Builder  {
 		} catch (IOException | MacroEvaluationException | InterruptedException e) {
 			listener.getLogger().println("Error replacing customDetails tokens.");
 		}
-		new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, build, listener);
+		String expandedPagerDutyDomain = pagerDutyDomain;
+		try {
+			expandedPagerDutyDomain = TokenMacro.expandAll(build, listener, pagerDutyDomain);
+		} catch (IOException | MacroEvaluationException | InterruptedException e) {
+			listener.getLogger().println("Error replacing pagerDutyDomain tokens.");
+		}
+		new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, expandedPagerDutyDomain, build, listener);
 		return true;
     }
 
@@ -104,6 +115,15 @@ public class ChangeEventBuilder extends Builder  {
 
 	public String getCustomDetails() {
 		return customDetails;
+	}
+
+	@DataBoundSetter
+	public void setPagerDutyDomain(String pagerDutyDomain) {
+		this.pagerDutyDomain = pagerDutyDomain;
+	}
+
+	public String getPagerDutyDomain() {
+		return pagerDutyDomain;
 	}
 
     @Extension

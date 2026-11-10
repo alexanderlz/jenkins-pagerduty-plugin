@@ -7,6 +7,7 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
+import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -24,6 +25,15 @@ public class ChangeEventSender {
     public final void send(String integrationKey,
                            String summaryText,
                            String customDetails,
+                           Run<?, ?> build,
+                           TaskListener listener) {
+        send(integrationKey, summaryText, customDetails, null, build, listener);
+    }
+
+    public final void send(String integrationKey,
+                           String summaryText,
+                           String customDetails,
+                           String pagerDutyDomain,
                            Run<?, ?> build,
                            TaskListener listener) {
         try {
@@ -51,8 +61,9 @@ public class ChangeEventSender {
 
             listener.getLogger().println("Generated payload for PagerDuty Change Events");
             listener.getLogger().println(json);
+            listener.getLogger().println("Sending to " + PagerDutyUtils.buildApiUrl(pagerDutyDomain, PagerDutyUtils.CHANGE_EVENTS_PATH));
 
-            ChangeEventsAPI.Response response = ChangeEventsAPI.send(json);
+            ChangeEventsAPI.Response response = ChangeEventsAPI.send(json, pagerDutyDomain);
             listener.getLogger().println("PagerDuty Change Events responded with " + response.getCode());
             listener.getLogger().println(response.getBody());
         } catch (IOException e) {

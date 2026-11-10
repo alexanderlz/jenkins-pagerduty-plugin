@@ -12,8 +12,8 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
-import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -40,6 +40,7 @@ public class PagerDutyTrigger extends Notifier {
     private boolean triggerOnUnstable;
     private boolean triggerOnAborted;
     private boolean triggerOnNotBuilt;
+    private String pagerDutyDomain;
 
     @DataBoundConstructor
     public PagerDutyTrigger(String routingKey, String dedupKey, String incidentSummary, 
@@ -135,6 +136,15 @@ public class PagerDutyTrigger extends Notifier {
         return triggerOnNotBuilt;
     }
 
+    public String getPagerDutyDomain() {
+        return pagerDutyDomain;
+    }
+
+    @DataBoundSetter
+    public void setPagerDutyDomain(String pagerDutyDomain) {
+        this.pagerDutyDomain = pagerDutyDomain;
+    }
+
     protected Object readResolve() {
         // this.getDescriptor().load();
         return this;
@@ -208,8 +218,9 @@ public class PagerDutyTrigger extends Notifier {
         boolean res = true;
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
 
-        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary, new JSONObject(customDetails),
+        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary, PagerDutyUtils.parseCustomDetails(customDetails),
                 incidentSource, incidentSeverity, incidentComponent, incidentGroup, incidentClass, numPreviousBuildsToProbe, resolveOnBackToNormal, triggerOnSuccess, triggerOnFailure, triggerOnUnstable, triggerOnAborted, triggerOnNotBuilt);
+        pdparams.setPagerDutyDomain(pagerDutyDomain);
 
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {

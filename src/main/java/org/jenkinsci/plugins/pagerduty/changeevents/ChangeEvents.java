@@ -76,6 +76,11 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
      */
     private   String customDetails ;
 
+    /**
+     * The PagerDuty domain to send events to. Defaults to events.pagerduty.com when empty.
+     */
+    private String pagerDutyDomain;
+
     @DataBoundConstructor
     public ChangeEvents(String integrationKey) {
         this.integrationKey = integrationKey;
@@ -108,7 +113,13 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
             } catch (IOException | MacroEvaluationException | InterruptedException e) {
                 listener.getLogger().println("Error replacing customDetails tokens.");
             }
-            new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, build, listener);
+            String expandedPagerDutyDomain = pagerDutyDomain;
+            try {
+                expandedPagerDutyDomain = TokenMacro.expand(build, workspace, listener, pagerDutyDomain);
+            } catch (IOException | MacroEvaluationException | InterruptedException e) {
+                listener.getLogger().println("Error replacing pagerDutyDomain tokens.");
+            }
+            new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, expandedPagerDutyDomain, build, listener);
 
         }
 
@@ -138,6 +149,15 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
     @DataBoundSetter
     public void setCustomDetails(String customDetails) {
         this.customDetails = customDetails;
+    }
+
+    public String getPagerDutyDomain() {
+        return pagerDutyDomain;
+    }
+
+    @DataBoundSetter
+    public void setPagerDutyDomain(String pagerDutyDomain) {
+        this.pagerDutyDomain = pagerDutyDomain;
     }
 
     public boolean getCreateOnSuccess() {

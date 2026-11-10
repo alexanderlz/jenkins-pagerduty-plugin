@@ -32,7 +32,7 @@ public class PagerDutyParamHolder {
     private boolean triggerOnUnstable;
     private boolean triggerOnAborted;
     private boolean triggerOnNotBuilt;
-
+    private String pagerDutyDomain;
 
     public PagerDutyParamHolder(String routingKey, String dedupKey, String incidentSummary, JSONObject customDetails, String incidentSource, String incidentSeverity, String incidentComponent, String incidentGroup, String incidentClass, Integer numPreviousBuildsToProbe, boolean resolveOnBackToNormal, boolean triggerOnSuccess, boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted, boolean triggerOnNotBuilt) {
         this.routingKey = routingKey;
@@ -184,6 +184,14 @@ public class PagerDutyParamHolder {
         return triggerOnNotBuilt;
     }
 
+    public String getPagerDutyDomain() {
+        return pagerDutyDomain;
+    }
+
+    public void setPagerDutyDomain(String pagerDutyDomain) {
+        this.pagerDutyDomain = pagerDutyDomain;
+    }
+
     public void tokenReplaceWorkflow(Run<?, ?> run, FilePath workspace, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
         this.setRoutingKey(TokenMacro.expandAll(run, workspace, listener, this.routingKey));
         this.setDedupKey(TokenMacro.expandAll(run, workspace, listener, this.dedupKey));
@@ -194,6 +202,7 @@ public class PagerDutyParamHolder {
         this.setIncidentComponent(TokenMacro.expandAll(run, workspace, listener, this.incidentComponent));
         this.setIncidentGroup(TokenMacro.expandAll(run, workspace, listener, this.incidentGroup));
         this.setIncidentClass(TokenMacro.expandAll(run, workspace, listener, this.incidentClass));
+        this.setPagerDutyDomain(TokenMacro.expandAll(run, workspace, listener, this.pagerDutyDomain));
     }
 
     public void tokenReplace(AbstractBuild<?, ?> build, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
@@ -206,5 +215,6 @@ public class PagerDutyParamHolder {
         this.setIncidentComponent(TokenMacro.expandAll(build, listener, this.incidentComponent));
         this.setIncidentGroup(TokenMacro.expandAll(build, listener, this.incidentGroup));
         this.setIncidentClass(TokenMacro.expandAll(build, listener, this.incidentClass));
+        this.setPagerDutyDomain(TokenMacro.expandAll(build, listener, this.pagerDutyDomain));
     }
 }

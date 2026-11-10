@@ -56,7 +56,7 @@ public class ChangeEventsTest {
 
         //static method mocks using PowerMockito
         PowerMockito.mockStatic(ChangeEventsAPI.class);
-        when(ChangeEventsAPI.send(anyString())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
+        when(ChangeEventsAPI.send(anyString(), any())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
         PowerMockito.mockStatic(DisplayURLProvider.class);
         when(DisplayURLProvider.get()).thenReturn(urlProvider);
 
@@ -70,6 +70,7 @@ public class ChangeEventsTest {
         changeEvents.setCreateOnSuccess(true);
         changeEvents.setSummaryText("testjobname built successfully");
         changeEvents.setCustomDetails("{\"field\":\"value\"}");
+        changeEvents.setPagerDutyDomain("events.eu.pagerduty.com");
         when(urlProvider.get().getRunURL(build)).thenReturn("http://unitest-jenkins/job/testjobname/99/display/redirect");
 
         FilePath workspace = new FilePath(new File(System.getProperty("java.io.tmpdir")));
@@ -79,7 +80,9 @@ public class ChangeEventsTest {
 
         //mock API call
         PowerMockito.verifyStatic(ChangeEventsAPI.class, times(1));
-        ChangeEventsAPI.send(jsonArg.capture());
+        ArgumentCaptor<String> domainArg = ArgumentCaptor.forClass(String.class);
+        ChangeEventsAPI.send(jsonArg.capture(), domainArg.capture());
+        assertEquals("events.eu.pagerduty.com", domainArg.getValue());
         //Expecting jsonArg to contain a valid JSON string similar to the following
         //{"payload":{"summary":"testjobname built successfully","source":"Jenkins","custom_details":{"duration":null,"build_number":0, "field":"value"},"timestamp":"2021-03-17T21:45:24.808Z"},"links":[{"href":"http://www.testurl.com","text":"View on Jenkins"}],"routing_key":"testIntegration key"}
 

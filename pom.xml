@@ -121,7 +121,7 @@
         <!-- Pipeline: Job-->
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-cps</artifactId>
+            <artifactId>workflow-job</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- Pipeline: Declarative-->
