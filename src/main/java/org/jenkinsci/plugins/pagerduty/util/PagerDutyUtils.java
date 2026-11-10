@@ -24,14 +24,16 @@ import java.util.regex.Pattern;
 public class PagerDutyUtils {
 
     public static final String DEFAULT_PAGERDUTY_DOMAIN = "events.pagerduty.com";
+    public static final String EVENTS_PATH = "/v2/enqueue";
+    public static final String CHANGE_EVENTS_PATH = "/v2/change/enqueue";
 
     /**
      * Builds an https URL for the given PagerDuty domain and path, falling back to the default
-     * domain when none is provided. A scheme or trailing slash on the domain is tolerated.
+     * domain when none is provided. A scheme or path on the domain is ignored.
      */
     public static String buildApiUrl(String pagerDutyDomain, String path) {
         String domain = pagerDutyDomain == null ? "" : pagerDutyDomain.trim();
-        domain = domain.replaceFirst("^(?i)https?://", "").replaceAll("/+$", "");
+        domain = domain.replaceFirst("^(?i)https?://", "").replaceFirst("/.*$", "");
         if (domain.isEmpty()) {
             domain = DEFAULT_PAGERDUTY_DOMAIN;
         }
@@ -87,8 +89,6 @@ public class PagerDutyUtils {
     }
 
     public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, Run<?, ?> build, FilePath workspace, TaskListener listener) {
-        PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient(pdparams.getPagerDutyDomain());
-
         boolean hasDedupKey = false;
         String routingKey = null;
 
@@ -100,12 +100,14 @@ public class PagerDutyUtils {
             }
 
             routingKey = pdparams.getRoutingKey();
+            PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient(pdparams.getPagerDutyDomain());
             String dedupKey = pdparams.getDedupKey();
             if (dedupKey != null && dedupKey.length() > 0) {
                 hasDedupKey = true;
             }
 
             listener.getLogger().printf("Triggering pagerDuty with routingKey %s%n", routingKey);
+            listener.getLogger().printf("Sending to %s%n", buildApiUrl(pdparams.getPagerDutyDomain(), EVENTS_PATH));
 
             listener.getLogger().printf("summary %s%n", pdparams.getIncidentSummary());
             listener.getLogger().printf("severity %s%n", pdparams.getIncidentSeverity());
@@ -144,7 +146,7 @@ public class PagerDutyUtils {
     private static PagerDutyEventsClient createProxyAwarePagerDutyEventsClient(String pagerDutyDomain) {
         final Jenkins jenkins = Jenkins.getInstanceOrNull();
         final ProxyConfiguration proxy = jenkins != null ? jenkins.proxy : null;
-        return DomainAwarePagerDutyEventsClient.create(buildApiUrl(pagerDutyDomain, "/v2/enqueue"),
+        return DomainAwarePagerDutyEventsClient.create(buildApiUrl(pagerDutyDomain, EVENTS_PATH),
                 proxy != null ? proxy.name : null, proxy != null ? proxy.port : null);
     }
 

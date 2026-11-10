@@ -202,6 +202,7 @@ public class PagerDutyParamHolder {
         this.setIncidentComponent(TokenMacro.expandAll(run, workspace, listener, this.incidentComponent));
         this.setIncidentGroup(TokenMacro.expandAll(run, workspace, listener, this.incidentGroup));
         this.setIncidentClass(TokenMacro.expandAll(run, workspace, listener, this.incidentClass));
+        this.setPagerDutyDomain(TokenMacro.expandAll(run, workspace, listener, this.pagerDutyDomain));
     }
 
     public void tokenReplace(AbstractBuild<?, ?> build, TaskListener listener) throws InterruptedException, MacroEvaluationException, IOException {
@@ -214,5 +215,6 @@ public class PagerDutyParamHolder {
         this.setIncidentComponent(TokenMacro.expandAll(build, listener, this.incidentComponent));
         this.setIncidentGroup(TokenMacro.expandAll(build, listener, this.incidentGroup));
         this.setIncidentClass(TokenMacro.expandAll(build, listener, this.incidentClass));
+        this.setPagerDutyDomain(TokenMacro.expandAll(build, listener, this.pagerDutyDomain));
     }
 }

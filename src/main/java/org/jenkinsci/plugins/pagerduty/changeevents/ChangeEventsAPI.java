@@ -23,7 +23,7 @@ public class ChangeEventsAPI {
     }
 
     public static Response send(String json, String pagerDutyDomain) throws IOException {
-        URL url = new URL(PagerDutyUtils.buildApiUrl(pagerDutyDomain, "/v2/change/enqueue"));
+        URL url = new URL(PagerDutyUtils.buildApiUrl(pagerDutyDomain, PagerDutyUtils.CHANGE_EVENTS_PATH));
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");

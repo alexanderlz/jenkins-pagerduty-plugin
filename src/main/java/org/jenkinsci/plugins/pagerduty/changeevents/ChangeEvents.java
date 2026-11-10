@@ -113,7 +113,13 @@ public class ChangeEvents extends Notifier implements SimpleBuildStep {
             } catch (IOException | MacroEvaluationException | InterruptedException e) {
                 listener.getLogger().println("Error replacing customDetails tokens.");
             }
-            new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, pagerDutyDomain, build, listener);
+            String expandedPagerDutyDomain = pagerDutyDomain;
+            try {
+                expandedPagerDutyDomain = TokenMacro.expand(build, workspace, listener, pagerDutyDomain);
+            } catch (IOException | MacroEvaluationException | InterruptedException e) {
+                listener.getLogger().println("Error replacing pagerDutyDomain tokens.");
+            }
+            new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, expandedPagerDutyDomain, build, listener);
 
         }
 

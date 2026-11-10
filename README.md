@@ -84,7 +84,8 @@ NOTE - To include Custom Details in the step, specify them via a Map as shown ab
 #### PagerDuty Domain
 
 All actions and steps accept an optional `pagerDutyDomain` (for example `events.eu.pagerduty.com` for
-EU-hosted accounts). When omitted, events are sent to `events.pagerduty.com`.
+EU-hosted accounts). When omitted, events are sent to `events.pagerduty.com`. Only the host (and optional port)
+is used, and environment variables and token macros are expanded in freestyle jobs.
 
 ```
 pagerduty(routingKey: "$ROUTING_KEY", pagerDutyDomain: "events.eu.pagerduty.com")

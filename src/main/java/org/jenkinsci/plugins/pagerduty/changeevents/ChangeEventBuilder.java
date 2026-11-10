@@ -85,7 +85,13 @@ public class ChangeEventBuilder extends Builder  {
 		} catch (IOException | MacroEvaluationException | InterruptedException e) {
 			listener.getLogger().println("Error replacing customDetails tokens.");
 		}
-		new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, pagerDutyDomain, build, listener);
+		String expandedPagerDutyDomain = pagerDutyDomain;
+		try {
+			expandedPagerDutyDomain = TokenMacro.expandAll(build, listener, pagerDutyDomain);
+		} catch (IOException | MacroEvaluationException | InterruptedException e) {
+			listener.getLogger().println("Error replacing pagerDutyDomain tokens.");
+		}
+		new ChangeEventSender().send(expandedIntegrationKey, expandedSummaryText, expandedCustomDetails, expandedPagerDutyDomain, build, listener);
 		return true;
     }
 
