@@ -77,7 +77,7 @@ public class ChangeEventBuilderTest {
 
 		//static method mocks using PowerMockito
 		PowerMockito.mockStatic(ChangeEventsAPI.class);
-		when(ChangeEventsAPI.send(anyString())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
+		when(ChangeEventsAPI.send(anyString(), any())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
 		PowerMockito.mockStatic(DisplayURLProvider.class);
 		when(DisplayURLProvider.get()).thenReturn(urlProvider);
 
@@ -94,7 +94,7 @@ public class ChangeEventBuilderTest {
 
 		//mock API call
 		PowerMockito.verifyStatic(ChangeEventsAPI.class, times(1));
-		ChangeEventsAPI.send(jsonArg.capture());
+		ChangeEventsAPI.send(jsonArg.capture(), any());
 		//Expecting jsonArg to contain a valid JSON string similar to the following
 		//{"payload":{"summary":"testjobname built successfully","source":"Jenkins","custom_details":{"duration":null,"build_number":0, "field":"value"},"timestamp":"2021-03-17T21:45:24.808Z"},"links":[{"href":"http://www.testurl.com","text":"View on Jenkins"}],"routing_key":"testIntegration key"}
 
@@ -120,7 +120,7 @@ public class ChangeEventBuilderTest {
 
 		//static method mocks using PowerMockito
 		PowerMockito.mockStatic(ChangeEventsAPI.class);
-		when(ChangeEventsAPI.send(anyString())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
+		when(ChangeEventsAPI.send(anyString(), any())).thenReturn(new ChangeEventsAPI.Response(200, "OK"));
 		PowerMockito.mockStatic(DisplayURLProvider.class);
 		when(DisplayURLProvider.get()).thenReturn(urlProvider);
 
@@ -136,7 +136,7 @@ public class ChangeEventBuilderTest {
 
 		//mock API call
 		PowerMockito.verifyStatic(ChangeEventsAPI.class, times(1));
-		ChangeEventsAPI.send(jsonArg.capture());
+		ChangeEventsAPI.send(jsonArg.capture(), any());
 		//Expecting jsonArg to contain a valid JSON string similar to the following
 		//{"payload":{"summary":"testjobname built successfully","source":"Jenkins","custom_details":{"duration":null,"build_number":0},"timestamp":"2021-03-17T21:45:24.808Z"},"links":[{"href":"http://www.testurl.com","text":"View on Jenkins"}],"routing_key":"testIntegration key"}
 

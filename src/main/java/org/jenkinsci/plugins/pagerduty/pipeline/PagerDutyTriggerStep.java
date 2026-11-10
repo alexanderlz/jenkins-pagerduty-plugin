@@ -47,6 +47,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private boolean triggerOnUnstable;
     private boolean triggerOnAborted;
     private boolean triggerOnNotBuilt;
+    private String pagerDutyDomain;
 
     @DataBoundConstructor
     public PagerDutyTriggerStep(@Nonnull String routingKey) {
@@ -201,6 +202,15 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
         return triggerOnNotBuilt;
     }
 
+    public String getPagerDutyDomain() {
+        return pagerDutyDomain;
+    }
+
+    @DataBoundSetter
+    public void setPagerDutyDomain(String pagerDutyDomain) {
+        this.pagerDutyDomain = pagerDutyDomain;
+    }
+
     @Extension
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
 
@@ -251,6 +261,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
             step.incidentSource, step.incidentSeverity, step.incidentComponent, step.incidentGroup, step.incidentClass,
             step.numPreviousBuildsToProbe, step.resolveOnBackToNormal, step.triggerOnSuccess, step.triggerOnFailure,
             step.triggerOnUnstable, step.triggerOnAborted, step.triggerOnNotBuilt);
+            pdparams.setPagerDutyDomain(step.pagerDutyDomain);
 
             if (step.resolve) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);

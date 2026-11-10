@@ -12,12 +12,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.stream.Collectors;
 
+import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
+
 /**
  * Simple wrapper around calling the PagerDuty Change Events API.
  */
 public class ChangeEventsAPI {
     public static Response send(String json) throws IOException {
-        URL url = new URL("https://events.pagerduty.com/v2/change/enqueue");
+        return send(json, null);
+    }
+
+    public static Response send(String json, String pagerDutyDomain) throws IOException {
+        URL url = new URL(PagerDutyUtils.buildApiUrl(pagerDutyDomain, "/v2/change/enqueue"));
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");

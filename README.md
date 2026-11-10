@@ -81,6 +81,16 @@ NOTE - To include Custom Details in the step, specify them via a Map as shown ab
 
 `pagerdutyChangeEvent(integrationKey: '$INTEGRATION_KEY')`
 
+#### PagerDuty Domain
+
+All actions and steps accept an optional `pagerDutyDomain` (for example `events.eu.pagerduty.com` for
+EU-hosted accounts). When omitted, events are sent to `events.pagerduty.com`.
+
+```
+pagerduty(routingKey: "$ROUTING_KEY", pagerDutyDomain: "events.eu.pagerduty.com")
+pagerdutyChangeEvent(integrationKey: '$INTEGRATION_KEY', pagerDutyDomain: 'events.eu.pagerduty.com')
+```
+
 ---
 You can choose one (or both) of the options to use PagerDuty
 

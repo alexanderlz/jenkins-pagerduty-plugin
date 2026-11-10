@@ -4,6 +4,9 @@
   <f:entry title="Routing Key" field="routingKey">
     <f:textbox />
   </f:entry>
+  <f:entry title="PagerDuty Domain" field="pagerDutyDomain">
+      <f:textbox />
+  </f:entry>
   <f:entry title="Dedup Key" field="dedupKey">
     <f:textbox />
   </f:entry>

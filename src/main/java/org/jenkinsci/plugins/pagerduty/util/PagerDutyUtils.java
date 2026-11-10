@@ -22,6 +22,21 @@ import java.util.regex.Pattern;
  */
 public class PagerDutyUtils {
 
+    public static final String DEFAULT_PAGERDUTY_DOMAIN = "events.pagerduty.com";
+
+    /**
+     * Builds an https URL for the given PagerDuty domain and path, falling back to the default
+     * domain when none is provided. A scheme or trailing slash on the domain is tolerated.
+     */
+    public static String buildApiUrl(String pagerDutyDomain, String path) {
+        String domain = pagerDutyDomain == null ? "" : pagerDutyDomain.trim();
+        domain = domain.replaceFirst("^(?i)https?://", "").replaceAll("/+$", "");
+        if (domain.isEmpty()) {
+            domain = DEFAULT_PAGERDUTY_DOMAIN;
+        }
+        return "https://" + domain + path;
+    }
+
     public static String extractDedupKey(String log) {
         Pattern pattern = Pattern.compile(".*<<([0-9a-z]*)>>.*");
         if (log == null) {
@@ -37,10 +52,7 @@ public class PagerDutyUtils {
     }
 
     public static boolean resolveIncident(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
-        final PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient();
-        if (pagerDuty == null) {
-            return false;
-        }
+        final PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient(pdparams.getPagerDutyDomain());
         if (pdparams.getDedupKey() != null && pdparams.getDedupKey().trim().length() > 0) {
             ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncidentBuilder.newBuilder(pdparams.getRoutingKey(), pdparams.getDedupKey());
             ResolveIncident resolveIncident = resolveIncidentBuilder.build();
@@ -64,10 +76,7 @@ public class PagerDutyUtils {
     }
 
     public static boolean triggerPagerDuty(PagerDutyParamHolder pdparams, Run<?, ?> build, FilePath workspace, TaskListener listener) {
-        PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient();
-        if (pagerDuty == null) {
-            return false;
-        }
+        PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient(pdparams.getPagerDutyDomain());
 
         boolean hasDedupKey = false;
         String routingKey = null;
@@ -121,13 +130,27 @@ public class PagerDutyUtils {
         return true;
     }
 
-    private static PagerDutyEventsClient createProxyAwarePagerDutyEventsClient() {
+    private static PagerDutyEventsClient createProxyAwarePagerDutyEventsClient(String pagerDutyDomain) {
         final Jenkins jenkins = Jenkins.getInstanceOrNull();
         final ProxyConfiguration proxy = jenkins != null ? jenkins.proxy : null;
-        if (proxy != null) {
-            return PagerDutyEventsClient.create(proxy.name, proxy.port);
-        } else {
-            return PagerDutyEventsClient.create();
+        return DomainAwarePagerDutyEventsClient.create(buildApiUrl(pagerDutyDomain, "/v2/enqueue"),
+                proxy != null ? proxy.name : null, proxy != null ? proxy.port : null);
+    }
+
+    /**
+     * The client's builder is only accessible to subclasses, so this exposes a factory that sets the event API URL.
+     */
+    private static final class DomainAwarePagerDutyEventsClient extends PagerDutyEventsClient {
+        private DomainAwarePagerDutyEventsClient(PagerDutyClientBuilder builder) {
+            super(builder);
+        }
+
+        static PagerDutyEventsClient create(String eventApi, String proxyHost, Integer proxyPort) {
+            PagerDutyClientBuilder builder = new PagerDutyClientBuilder().withEventApi(eventApi);
+            if (proxyHost != null) {
+                builder.withProxyHost(proxyHost).withProxyPort(proxyPort);
+            }
+            return new DomainAwarePagerDutyEventsClient(builder);
         }
     }
 }
