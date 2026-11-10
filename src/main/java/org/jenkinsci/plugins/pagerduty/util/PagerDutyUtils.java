@@ -12,6 +12,7 @@ import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -35,6 +36,16 @@ public class PagerDutyUtils {
             domain = DEFAULT_PAGERDUTY_DOMAIN;
         }
         return "https://" + domain + path;
+    }
+
+    /**
+     * Parses the custom details JSON, treating a missing or blank value as an empty object.
+     */
+    public static JSONObject parseCustomDetails(String customDetails) {
+        if (customDetails == null || customDetails.trim().isEmpty()) {
+            return new JSONObject();
+        }
+        return new JSONObject(customDetails);
     }
 
     public static String extractDedupKey(String log) {

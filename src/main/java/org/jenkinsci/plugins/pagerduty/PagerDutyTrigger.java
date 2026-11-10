@@ -12,7 +12,6 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
-import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -219,7 +218,7 @@ public class PagerDutyTrigger extends Notifier {
         boolean res = true;
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
 
-        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary, new JSONObject(customDetails),
+        PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary, PagerDutyUtils.parseCustomDetails(customDetails),
                 incidentSource, incidentSeverity, incidentComponent, incidentGroup, incidentClass, numPreviousBuildsToProbe, resolveOnBackToNormal, triggerOnSuccess, triggerOnFailure, triggerOnUnstable, triggerOnAborted, triggerOnNotBuilt);
         pdparams.setPagerDutyDomain(pagerDutyDomain);
 

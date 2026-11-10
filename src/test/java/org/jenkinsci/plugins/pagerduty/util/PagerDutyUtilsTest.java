@@ -23,4 +23,16 @@ public class PagerDutyUtilsTest {
         assertEquals("https://events.eu.pagerduty.com/v2/enqueue",
                 PagerDutyUtils.buildApiUrl(" https://events.eu.pagerduty.com/ ", "/v2/enqueue"));
     }
+
+    @Test
+    public void testParseCustomDetailsTreatsBlankAsEmpty() {
+        assertEquals(0, PagerDutyUtils.parseCustomDetails(null).length());
+        assertEquals(0, PagerDutyUtils.parseCustomDetails("").length());
+        assertEquals(0, PagerDutyUtils.parseCustomDetails("  ").length());
+    }
+
+    @Test
+    public void testParseCustomDetailsParsesJson() {
+        assertEquals("bar", PagerDutyUtils.parseCustomDetails("{\"foo\": \"bar\"}").getString("foo"));
+    }
 }
