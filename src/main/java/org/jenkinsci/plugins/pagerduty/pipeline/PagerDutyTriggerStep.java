@@ -231,10 +231,8 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
 
         @Override
         protected String run() throws Exception {
-            Jenkins jenkins;
-            try {
-                jenkins = Jenkins.getInstance();
-            } catch (NullPointerException ne) {
+            Jenkins jenkins = Jenkins.getInstanceOrNull();
+            if (jenkins == null) {
                 listener.error("ERROR?!");
                 return null;
             }
