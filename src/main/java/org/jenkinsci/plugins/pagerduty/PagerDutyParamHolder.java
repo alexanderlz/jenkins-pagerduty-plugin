@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.pagerduty;
 
-import com.github.dikhan.pagerduty.client.events.domain.Severity;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Run;
@@ -9,6 +8,8 @@ import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 import org.jenkinsci.plugins.tokenmacro.TokenMacro;
 
 import java.io.IOException;
+
+import static org.jenkinsci.plugins.pagerduty.PDConstants.Severity;
 
 /**
  * Created by alex on 08/11/17.

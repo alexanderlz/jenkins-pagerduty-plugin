@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
@@ -27,6 +28,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.xml.*", "org.xml.*", "org.w3c.dom.*"})
 @PrepareForTest({ChangeEventsAPI.class, DisplayURLProvider.class})
 public class ChangeEventSenderTest {
 
@@ -161,9 +163,9 @@ public class ChangeEventSenderTest {
         assertEquals(buildCauseShortDescription, sendCustomDetailCause);
         assertEquals(integrationKey, routingKey);
         if (customDetailsJSON.isPresent()) {
-            customDetailsJSON.get().keySet().stream().forEach(key -> {
+            for (String key : customDetailsJSON.get().keySet()) {
                 assertTrue(sendBody.getJSONObject("payload").getJSONObject("custom_details").has(key));
-            });
+            }
         }
     }
 }

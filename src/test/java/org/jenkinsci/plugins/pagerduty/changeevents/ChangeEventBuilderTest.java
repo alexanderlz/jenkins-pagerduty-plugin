@@ -2,7 +2,6 @@ package org.jenkinsci.plugins.pagerduty.changeevents;
 
 //import required libraries for mockito, junit and jenkins
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 import hudson.model.AbstractBuild;
@@ -20,26 +19,23 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
 
-import java.util.Map;
-import hudson.EnvVars;
 import java.io.IOException;
 import org.json.*;
-
-import java.io.IOException;
 
 import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 
 //power mockito to mock static method of classes
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.xml.*", "org.xml.*", "org.w3c.dom.*"})
 @PrepareForTest({ChangeEventsAPI.class, DisplayURLProvider.class})
 
 public class ChangeEventBuilderTest {

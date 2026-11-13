@@ -15,6 +15,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.ArgumentCaptor;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import javax.annotation.Nonnull;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
 
 @RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.xml.*", "org.xml.*", "org.w3c.dom.*"})
 @PrepareForTest({ChangeEventsAPI.class, DisplayURLProvider.class})
 public class ChangeEventsTest {
 

@@ -1,19 +1,16 @@
 package org.jenkinsci.plugins.pagerduty.util;
 
-import com.github.dikhan.pagerduty.client.events.PagerDutyEventsClient;
-import com.github.dikhan.pagerduty.client.events.domain.*;
-import com.github.dikhan.pagerduty.client.events.domain.ResolveIncident.ResolveIncidentBuilder;
-import com.github.dikhan.pagerduty.client.events.exceptions.NotifyEventException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import hudson.FilePath;
-import hudson.ProxyConfiguration;
 import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.pagerduty.PagerDutyParamHolder;
 import org.jenkinsci.plugins.tokenmacro.MacroEvaluationException;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,19 +51,20 @@ public class PagerDutyUtils {
     }
 
     public static boolean resolveIncident(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
-        final PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient(pdparams.getPagerDutyDomain());
         if (pdparams.getDedupKey() != null && pdparams.getDedupKey().trim().length() > 0) {
-            ResolveIncidentBuilder resolveIncidentBuilder = ResolveIncidentBuilder.newBuilder(pdparams.getRoutingKey(), pdparams.getDedupKey());
-            ResolveIncident resolveIncident = resolveIncidentBuilder.build();
             listener.getLogger().printf("About to resolve incident:  %s%n", pdparams.getDedupKey());
             try {
-                EventResult result = pagerDuty.resolve(resolveIncident);
+                ObjectNode event = PagerDutyEventsAPI.buildEvent(pdparams, "resolve");
+                JsonNode result = PagerDutyEventsAPI.send(URI.create(buildApiUrl(pdparams.getPagerDutyDomain(), EVENTS_PATH)), event);
                 if (result != null) {
-                    listener.getLogger().println("Finished resolving - " + result.getStatus());
+                    listener.getLogger().println("Finished resolving - " + textValue(result, "status"));
                 } else {
                     listener.getLogger().println("Attempt to resolve the incident returned null - Incident may already be closed or may not exist.");
                 }
             } catch (Exception e) {
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
                 listener.getLogger().println("Error while trying to resolve ");
                 listener.getLogger().println(e.getMessage());
                 return false;
@@ -89,7 +87,6 @@ public class PagerDutyUtils {
             }
 
             routingKey = pdparams.getRoutingKey();
-            PagerDutyEventsClient pagerDuty = createProxyAwarePagerDutyEventsClient(pdparams.getPagerDutyDomain());
             String dedupKey = pdparams.getDedupKey();
             if (dedupKey != null && dedupKey.length() > 0) {
                 hasDedupKey = true;
@@ -100,58 +97,32 @@ public class PagerDutyUtils {
 
             listener.getLogger().printf("summary %s%n", pdparams.getIncidentSummary());
             listener.getLogger().printf("severity %s%n", pdparams.getIncidentSeverity());
-            Payload.Builder payloadBuilder = Payload.Builder.newBuilder();
-            payloadBuilder.setSummary(pdparams.getIncidentSummary());
-            payloadBuilder.setSource(pdparams.getIncidentSource());
-            payloadBuilder.setSeverity(pdparams.getIncidentSeverity());
-            payloadBuilder.setComponent(pdparams.getIncidentComponent());
-            payloadBuilder.setGroup(pdparams.getIncidentGroup());
-            payloadBuilder.setEventClass(pdparams.getIncidentClass());
-            TriggerIncident.TriggerIncidentBuilder incBuilder = TriggerIncident.TriggerIncidentBuilder.newBuilder(routingKey, payloadBuilder.build());
-            if (hasDedupKey) {
-                incBuilder.setDedupKey(pdparams.getDedupKey());
-            }
-            EventResult result = pagerDuty.trigger(incBuilder.build());
+            ObjectNode event = PagerDutyEventsAPI.buildEvent(pdparams, "trigger");
+            JsonNode result = PagerDutyEventsAPI.send(URI.create(buildApiUrl(pdparams.getPagerDutyDomain(), EVENTS_PATH)), event);
 
             if (result != null) {
                 if (!hasDedupKey) {
-                    pdparams.setDedupKey(result.getDedupKey());
+                    pdparams.setDedupKey(textValue(result, "dedup_key"));
                 }
-                listener.getLogger().printf("PagerDuty Notification Result: %s%n", result.getStatus());
-                listener.getLogger().printf("Message: %s%n", result.getMessage());
-                listener.getLogger().printf("Errors: %s%n", result.getErrors());
+                listener.getLogger().printf("PagerDuty Notification Result: %s%n", textValue(result, "status"));
+                listener.getLogger().printf("Message: %s%n", textValue(result, "message"));
+                listener.getLogger().printf("Errors: %s%n", textValue(result, "errors"));
                 listener.getLogger().printf("PagerDuty dedupKey: <<%s>>%n", pdparams.getDedupKey());
             } else {
                 listener.getLogger().print("PagerDuty returned NULL. check network or PD settings!");
             }
-        } catch (RuntimeException | InterruptedException | IOException | MacroEvaluationException | NotifyEventException e) {
+        } catch (RuntimeException | InterruptedException | IOException | MacroEvaluationException e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             e.printStackTrace(listener.error("Tried to trigger PD with routingKey = [%s]", routingKey));
             return false;
         }
         return true;
     }
 
-    private static PagerDutyEventsClient createProxyAwarePagerDutyEventsClient(String pagerDutyDomain) {
-        final Jenkins jenkins = Jenkins.getInstanceOrNull();
-        final ProxyConfiguration proxy = jenkins != null ? jenkins.proxy : null;
-        return DomainAwarePagerDutyEventsClient.create(buildApiUrl(pagerDutyDomain, EVENTS_PATH),
-                proxy != null ? proxy.name : null, proxy != null ? proxy.port : null);
-    }
-
-    /**
-     * The client's builder is only accessible to subclasses, so this exposes a factory that sets the event API URL.
-     */
-    private static final class DomainAwarePagerDutyEventsClient extends PagerDutyEventsClient {
-        private DomainAwarePagerDutyEventsClient(PagerDutyClientBuilder builder) {
-            super(builder);
-        }
-
-        static PagerDutyEventsClient create(String eventApi, String proxyHost, Integer proxyPort) {
-            PagerDutyClientBuilder builder = new PagerDutyClientBuilder().withEventApi(eventApi);
-            if (proxyHost != null) {
-                builder.withProxyHost(proxyHost).withProxyPort(proxyPort);
-            }
-            return new DomainAwarePagerDutyEventsClient(builder);
-        }
+    private static String textValue(JsonNode result, String field) {
+        JsonNode value = result.get(field);
+        return value == null || value.isNull() ? null : value.isTextual() ? value.asText() : value.toString();
     }
 }

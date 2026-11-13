@@ -10,6 +10,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import jenkins.model.Jenkins;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * Verifies that environment variables in the PagerDuty domain are expanded before events are sent.
@@ -64,4 +68,24 @@ public class PagerDutyDomainTokenTest {
         FreeStyleBuild build = project.scheduleBuild2(0).get();
         jenkins.assertLogContains("https://localhost:1/v2/enqueue", build);
     }
+    @Test
+    public void testLegacyIncidentConfigXml() throws Exception {
+        String xml = "<org.jenkinsci.plugins.pagerduty.PagerDutyTrigger>"
+                + "<routingKey>routing</routingKey><dedupKey>key</dedupKey>"
+                + "<incidentSummary>summary</incidentSummary><incidentSource>jenkins</incidentSource>"
+                + "<incidentSeverity>warning</incidentSeverity><incidentComponent>component</incidentComponent>"
+                + "<incidentGroup>group</incidentGroup><incidentClass>class</incidentClass>"
+                + "<numPreviousBuildsToProbe>2</numPreviousBuildsToProbe>"
+                + "<resolveOnBackToNormal>true</resolveOnBackToNormal><triggerOnFailure>true</triggerOnFailure>"
+                + "</org.jenkinsci.plugins.pagerduty.PagerDutyTrigger>";
+        PagerDutyTrigger trigger = (PagerDutyTrigger) Jenkins.XSTREAM2.fromXML(xml);
+        assertEquals("routing", trigger.getRoutingKey());
+        assertEquals("key", trigger.getDedupKey());
+        assertEquals("warning", trigger.getIncidentSeverity());
+        assertEquals(Integer.valueOf(2), trigger.getNumPreviousBuildsToProbe());
+        assertNull(trigger.getPagerDutyDomain());
+        PagerDutyTrigger reloaded = (PagerDutyTrigger) Jenkins.XSTREAM2.fromXML(Jenkins.XSTREAM2.toXML(trigger));
+        jenkins.assertEqualBeans(trigger, reloaded, "routingKey,dedupKey,incidentSummary,incidentSource,incidentSeverity,incidentComponent,incidentGroup,incidentClass,numPreviousBuildsToProbe,resolveOnBackToNormal,triggerOnFailure,pagerDutyDomain");
+    }
+
 }
