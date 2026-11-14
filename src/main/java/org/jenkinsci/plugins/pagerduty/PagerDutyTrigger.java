@@ -27,6 +27,7 @@ public class PagerDutyTrigger extends Notifier {
     private String routingKey;
     private String dedupKey;
     private String incidentSummary;
+    private String customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -42,11 +43,12 @@ public class PagerDutyTrigger extends Notifier {
     private String pagerDutyDomain;
 
     @DataBoundConstructor
-    public PagerDutyTrigger(String routingKey, String dedupKey, String incidentSummary, String incidentSource,
-                            String incidentSeverity, String incidentComponent, String incidentGroup,
-                            String incidentClass, boolean resolveOnBackToNormal, boolean triggerOnSuccess,
-                            boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted,
-                            boolean triggerOnNotBuilt, Integer numPreviousBuildsToProbe) {
+    public PagerDutyTrigger(String routingKey, String dedupKey, String incidentSummary,
+            String incidentSource, String incidentSeverity,
+            String incidentComponent, String incidentGroup, String incidentClass,
+            boolean resolveOnBackToNormal, boolean triggerOnSuccess,
+            boolean triggerOnFailure, boolean triggerOnUnstable, boolean triggerOnAborted,
+            boolean triggerOnNotBuilt, Integer numPreviousBuildsToProbe) {
         super();
         this.routingKey = routingKey;
         this.dedupKey = dedupKey;
@@ -75,6 +77,15 @@ public class PagerDutyTrigger extends Notifier {
 
     public String getIncidentSummary() {
         return incidentSummary;
+    }
+
+    public String getCustomDetails() {
+        return customDetails;
+    }
+
+    @DataBoundSetter
+    public void setCustomDetails(String customDetails) {
+        this.customDetails = customDetails;
     }
 
     public String getIncidentSource() {
@@ -139,7 +150,7 @@ public class PagerDutyTrigger extends Notifier {
     }
 
     protected Object readResolve() {
-//        this.getDescriptor().load();
+        // this.getDescriptor().load();
         return this;
     }
 
@@ -205,15 +216,16 @@ public class PagerDutyTrigger extends Notifier {
      * , hudson.Launcher, hudson.model.BuildListener)
      */
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
-                           BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         LinkedList<Result> resultProbe = generateResultProbe();
 
         boolean res = true;
         PDConstants.ValidationResult validationResult = validWithPreviousResults(build, resultProbe, this.numPreviousBuildsToProbe);
+
         PagerDutyParamHolder pdparams = new PagerDutyParamHolder(routingKey, dedupKey, incidentSummary,
                 incidentSource, incidentSeverity, incidentComponent, incidentGroup, incidentClass, numPreviousBuildsToProbe, resolveOnBackToNormal, triggerOnSuccess, triggerOnFailure, triggerOnUnstable, triggerOnAborted, triggerOnNotBuilt);
         pdparams.setPagerDutyDomain(pagerDutyDomain);
+        pdparams.setCustomDetails(customDetails);
         if (validationResult != PDConstants.ValidationResult.DO_NOTHING) {
             if (validationResult == PDConstants.ValidationResult.DO_TRIGGER) {
                 listener.getLogger().println("Triggering PagerDuty Notification");

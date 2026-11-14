@@ -56,6 +56,18 @@ class PagerDutyEventsAPI {
             if (params.getIncidentClass() != null) {
                 payload.put("class", params.getIncidentClass());
             }
+            if (params.getCustomDetails() != null && !params.getCustomDetails().isBlank()) {
+                JsonNode customDetails;
+                try {
+                    customDetails = objectMapper.readTree(params.getCustomDetails());
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("customDetails must be a JSON object: " + e.getMessage(), e);
+                }
+                if (!customDetails.isObject()) {
+                    throw new IllegalArgumentException("customDetails must be a JSON object.");
+                }
+                payload.set("custom_details", customDetails);
+            }
         }
         return event;
     }

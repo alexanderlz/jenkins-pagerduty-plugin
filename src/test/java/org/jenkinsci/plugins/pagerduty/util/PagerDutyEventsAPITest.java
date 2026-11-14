@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 
 public class PagerDutyEventsAPITest {
 
@@ -43,6 +44,12 @@ public class PagerDutyEventsAPITest {
         assertEquals("component", trigger.path("payload").path("component").asText());
         assertEquals("group", trigger.path("payload").path("group").asText());
         assertEquals("class", trigger.path("payload").path("class").asText());
+        assertFalse(trigger.path("payload").has("custom_details"));
+        PagerDutyParamHolder withDetails = params();
+        withDetails.setCustomDetails("{\"team\":\"ops\"}");
+        assertEquals("ops", PagerDutyEventsAPI.buildEvent(withDetails, "trigger").path("payload").path("custom_details").path("team").asText());
+        withDetails.setCustomDetails("not json");
+        assertThrows(IllegalArgumentException.class, () -> PagerDutyEventsAPI.buildEvent(withDetails, "trigger"));
         ObjectNode resolve = PagerDutyEventsAPI.buildEvent(params(), "resolve");
         assertEquals("resolve", resolve.path("event_action").asText());
         assertFalse(resolve.has("payload"));

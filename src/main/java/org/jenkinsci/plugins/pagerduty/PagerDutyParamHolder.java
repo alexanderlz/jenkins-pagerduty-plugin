@@ -19,6 +19,7 @@ public class PagerDutyParamHolder {
     private String routingKey;
     private String dedupKey;
     private String incidentSummary;
+    private String customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -73,6 +74,14 @@ public class PagerDutyParamHolder {
 
     public void setIncidentSummary(String incidentSummary) {
         this.incidentSummary = incidentSummary;
+    }
+
+    public String getCustomDetails() {
+        return customDetails;
+    }
+
+    public void setCustomDetails(String customDetails) {
+        this.customDetails = customDetails;
     }
 
     public String getIncidentSource() {
@@ -186,6 +195,7 @@ public class PagerDutyParamHolder {
         this.setRoutingKey(TokenMacro.expandAll(run, workspace, listener, this.routingKey));
         this.setDedupKey(TokenMacro.expandAll(run, workspace, listener, this.dedupKey));
         this.setIncidentSummary(TokenMacro.expandAll(run, workspace, listener, this.incidentSummary));
+        this.setCustomDetails(TokenMacro.expandAll(run, workspace, listener, this.customDetails));
         this.setIncidentSource(TokenMacro.expandAll(run, workspace, listener, this.incidentSource));
         this.setIncidentSeverity(TokenMacro.expandAll(run, workspace, listener, this.incidentSeverity));
         this.setIncidentComponent(TokenMacro.expandAll(run, workspace, listener, this.incidentComponent));
@@ -198,6 +208,7 @@ public class PagerDutyParamHolder {
         this.setRoutingKey(TokenMacro.expandAll(build, listener, this.routingKey));
         this.setDedupKey(TokenMacro.expandAll(build, listener, this.dedupKey));
         this.setIncidentSummary(TokenMacro.expandAll(build, listener, this.incidentSummary));
+        this.setCustomDetails(TokenMacro.expandAll(build, listener, this.customDetails));
         this.setIncidentSource(TokenMacro.expandAll(build, listener, this.incidentSource));
         this.setIncidentSeverity(TokenMacro.expandAll(build, listener, this.incidentSeverity));
         this.setIncidentComponent(TokenMacro.expandAll(build, listener, this.incidentComponent));
