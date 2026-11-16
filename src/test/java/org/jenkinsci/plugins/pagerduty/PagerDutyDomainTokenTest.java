@@ -1,15 +1,20 @@
 package org.jenkinsci.plugins.pagerduty;
 
 import hudson.EnvVars;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.slaves.EnvironmentVariablesNodeProperty;
 import org.jenkinsci.plugins.pagerduty.changeevents.ChangeEventBuilder;
 import org.jenkinsci.plugins.pagerduty.changeevents.ChangeEvents;
+import org.jenkinsci.plugins.pagerduty.util.PagerDutyUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.TestBuilder;
 import jenkins.model.Jenkins;
 
 import static org.junit.Assert.assertEquals;
@@ -68,6 +73,23 @@ public class PagerDutyDomainTokenTest {
         FreeStyleBuild build = project.scheduleBuild2(0).get();
         jenkins.assertLogContains("https://localhost:1/v2/enqueue", build);
     }
+    @Test
+    public void testResolveExpandsTokens() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        project.getBuildersList().add(new TestBuilder() {
+            @Override
+            public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
+                PagerDutyParamHolder params = new PagerDutyParamHolder(INTEGRATION_KEY, "key-$PD_DOMAIN", "summary", "jenkins",
+                        "critical", "", "", "", 1, true, false, true, false, false, false);
+                params.setPagerDutyDomain("$PD_DOMAIN");
+                PagerDutyUtils.resolveIncident(params, build, listener);
+                return true;
+            }
+        });
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        jenkins.assertLogContains("About to resolve incident:  key-localhost:1", build);
+    }
+
     @Test
     public void testLegacyIncidentConfigXml() throws Exception {
         String xml = "<org.jenkinsci.plugins.pagerduty.PagerDutyTrigger>"
