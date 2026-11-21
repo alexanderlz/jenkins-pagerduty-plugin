@@ -51,26 +51,31 @@ public class PagerDutyUtils {
     }
 
     public static boolean resolveIncident(PagerDutyParamHolder pdparams, AbstractBuild<?, ?> build, TaskListener listener) {
-        if (pdparams.getDedupKey() != null && pdparams.getDedupKey().trim().length() > 0) {
-            listener.getLogger().printf("About to resolve incident:  %s%n", pdparams.getDedupKey());
-            try {
-                ObjectNode event = PagerDutyEventsAPI.buildEvent(pdparams, "resolve");
-                JsonNode result = PagerDutyEventsAPI.send(URI.create(buildApiUrl(pdparams.getPagerDutyDomain(), EVENTS_PATH)), event);
-                if (result != null) {
-                    listener.getLogger().println("Finished resolving - " + textValue(result, "status"));
-                } else {
-                    listener.getLogger().println("Attempt to resolve the incident returned null - Incident may already be closed or may not exist.");
-                }
-            } catch (Exception e) {
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-                listener.getLogger().println("Error while trying to resolve ");
-                listener.getLogger().println(e.getMessage());
-                return false;
+        try {
+            if (build != null) {
+                // Freestyle fields still hold raw tokens here; expand them as trigger does (JENKINS-36482).
+                // Pipeline passes no AbstractBuild and its strings are already interpolated.
+                pdparams.tokenReplace(build, listener);
             }
-        } else {
-            listener.getLogger().println("dedupKey not provided, nothing to resolve. (check previous builds for further clues)");
+            if (pdparams.getDedupKey() == null || pdparams.getDedupKey().trim().isEmpty()) {
+                listener.getLogger().println("dedupKey not provided, nothing to resolve. (check previous builds for further clues)");
+                return true;
+            }
+            listener.getLogger().printf("About to resolve incident:  %s%n", pdparams.getDedupKey());
+            ObjectNode event = PagerDutyEventsAPI.buildEvent(pdparams, "resolve");
+            JsonNode result = PagerDutyEventsAPI.send(URI.create(buildApiUrl(pdparams.getPagerDutyDomain(), EVENTS_PATH)), event);
+            if (result != null) {
+                listener.getLogger().println("Finished resolving - " + textValue(result, "status"));
+            } else {
+                listener.getLogger().println("Attempt to resolve the incident returned null - Incident may already be closed or may not exist.");
+            }
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            listener.getLogger().println("Error while trying to resolve ");
+            listener.getLogger().println(e.getMessage());
+            return false;
         }
         return true;
     }

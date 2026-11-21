@@ -36,13 +36,18 @@ class PagerDutyEventsAPI {
         if (params.getDedupKey() != null && !params.getDedupKey().isEmpty()) {
             event.put("dedup_key", params.getDedupKey());
         }
-        if ("trigger".equals(action)) {
-            if (params.getIncidentSummary() == null || params.getIncidentSummary().isBlank()) {
-                throw new IllegalArgumentException("summary cannot be blank.");
-            }
-            if (params.getIncidentSource() == null || params.getIncidentSource().isBlank()) {
-                throw new IllegalArgumentException("source cannot be blank.");
-            }
+        boolean trigger = "trigger".equals(action);
+        boolean hasSummary = params.getIncidentSummary() != null && !params.getIncidentSummary().isBlank();
+        boolean hasSource = params.getIncidentSource() != null && !params.getIncidentSource().isBlank();
+        if (trigger && !hasSummary) {
+            throw new IllegalArgumentException("summary cannot be blank.");
+        }
+        if (trigger && !hasSource) {
+            throw new IllegalArgumentException("source cannot be blank.");
+        }
+        // Resolve carries the same summary and source as the trigger, so event orchestration
+        // rules that route on them still match (JENKINS-75964). Without both, no payload is sent.
+        if (hasSummary && hasSource) {
             ObjectNode payload = event.putObject("payload");
             payload.put("summary", params.getIncidentSummary());
             payload.put("source", params.getIncidentSource());
@@ -56,7 +61,7 @@ class PagerDutyEventsAPI {
             if (params.getIncidentClass() != null) {
                 payload.put("class", params.getIncidentClass());
             }
-            if (params.getCustomDetails() != null && !params.getCustomDetails().isBlank()) {
+            if (trigger && params.getCustomDetails() != null && !params.getCustomDetails().isBlank()) {
                 JsonNode customDetails;
                 try {
                     customDetails = objectMapper.readTree(params.getCustomDetails());

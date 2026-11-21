@@ -52,7 +52,14 @@ public class PagerDutyEventsAPITest {
         assertThrows(IllegalArgumentException.class, () -> PagerDutyEventsAPI.buildEvent(withDetails, "trigger"));
         ObjectNode resolve = PagerDutyEventsAPI.buildEvent(params(), "resolve");
         assertEquals("resolve", resolve.path("event_action").asText());
-        assertFalse(resolve.has("payload"));
+        assertEquals("summary", resolve.path("payload").path("summary").asText());
+        assertEquals("source", resolve.path("payload").path("source").asText());
+        assertEquals("warning", resolve.path("payload").path("severity").asText());
+        withDetails.setCustomDetails("{\"team\":\"ops\"}");
+        assertFalse(PagerDutyEventsAPI.buildEvent(withDetails, "resolve").path("payload").has("custom_details"));
+        PagerDutyParamHolder noSource = params();
+        noSource.setIncidentSource("");
+        assertFalse(PagerDutyEventsAPI.buildEvent(noSource, "resolve").has("payload"));
         PagerDutyParamHolder defaultSeverity = params();
         defaultSeverity.setIncidentSeverity(null);
         assertEquals("critical", PagerDutyEventsAPI.buildEvent(defaultSeverity, "trigger").path("payload").path("severity").asText());
