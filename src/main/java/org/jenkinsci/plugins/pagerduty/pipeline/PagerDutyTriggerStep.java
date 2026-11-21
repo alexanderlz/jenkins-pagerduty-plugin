@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.pagerduty.pipeline;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
@@ -16,6 +17,8 @@ import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import java.util.Map;
+
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
@@ -31,6 +34,7 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     private boolean resolve;
     private String dedupKey;
     private String incidentSummary;
+    private Map<String, String> customDetails;
     private String incidentSource;
     private String incidentSeverity;
     private String incidentComponent;
@@ -80,6 +84,15 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
     @DataBoundSetter
     public void setIncidentSummary(String incidentSummary) {
         this.incidentSummary = incidentSummary;
+    }
+
+    public Map<String, String> getCustomDetails() {
+        return customDetails;
+    }
+
+    @DataBoundSetter
+    public void setCustomDetails(Map<String, String> customDetails) {
+        this.customDetails = customDetails;
     }
 
     public String getIncidentSource() {
@@ -247,6 +260,9 @@ public class PagerDutyTriggerStep extends AbstractStepImpl {
             step.numPreviousBuildsToProbe, step.resolveOnBackToNormal, step.triggerOnSuccess, step.triggerOnFailure,
             step.triggerOnUnstable, step.triggerOnAborted, step.triggerOnNotBuilt);
             pdparams.setPagerDutyDomain(step.pagerDutyDomain);
+            if (step.customDetails != null && !step.customDetails.isEmpty()) {
+                pdparams.setCustomDetails(new ObjectMapper().writeValueAsString(step.customDetails));
+            }
 
             if (step.resolve) {
                 PagerDutyUtils.resolveIncident(pdparams, this.getContext().get(AbstractBuild.class), listener);
