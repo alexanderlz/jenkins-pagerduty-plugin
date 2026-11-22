@@ -3,7 +3,7 @@ PagerDuty plugin
 
 [![Gitter](https://badges.gitter.im/jenkinsci/pagerduty-plugin.svg)](https://gitter.im/jenkinsci/pagerduty-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/pagerduty.svg)](https://plugins.jenkins.io/pagerduty)
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/pagerduty.svg?label=changelog)](https://github.com/jenkinsci/pagerduty-plugin/releases)
+[![GitHub release](https://img.shields.io/github/release/jenkinsci/pagerduty-plugin.svg?label=changelog)](https://github.com/jenkinsci/pagerduty-plugin/releases)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/pagerduty.svg?color=blue)](https://plugins.jenkins.io/pagerduty)
 
 
@@ -19,6 +19,9 @@ Allows users to send **Change Events** and trigger postbuild **Incidents** via
     Success/Failure/Aborted/Unstable/Not\_Built
 -   Trigger incidents based on number of consecutive build results
 -   Automatically **Resolve** incidents when job is **back to normal**
+-   Attach **custom details** to incidents and change events
+-   Configurable PagerDuty domain (for example EU-hosted accounts)
+-   Incident events honour the Jenkins proxy configuration
 -   Pipeline compatible
 -   TokenMacro consumer
     ([TokenMacro](https://plugins.jenkins.io/token-macro) -
@@ -38,22 +41,26 @@ Allows users to send **Change Events** and trigger postbuild **Incidents** via
 
 ### Getting Started
 
-Before you can use this plugin you'll need an **integration key** (also known as a **routing key**). This key tells PagerDuty which service the incoming event should be sent to. If you already have a service in PagerDuty you can [add an integration to it](https://support.pagerduty.com/docs/services-and-integrations#add-integrations-to-an-existing-service); otherwise, you can add the integration when [creating a new service](https://support.pagerduty.com/docs/services-and-integrations#create-a-new-service). For the integration type, choose "Jenkins CI".
+Before you can use this plugin you'll need an **integration key** (also known as a **routing key**). This key tells PagerDuty which service the incoming event should be sent to. If you already have a service in PagerDuty you can [add an integration to it](https://support.pagerduty.com/docs/services-and-integrations#add-integrations-to-an-existing-service); otherwise, you can add the integration when [creating a new service](https://support.pagerduty.com/docs/services-and-integrations#create-a-new-service).
+
+For the integration type, choose **Events API V2**. This is the type required for triggering and resolving incidents. The "Jenkins CI" integration type is intended for change events only. The key is 32 characters long; a 20 character PagerDuty REST API key will not work.
 
 Once you have an integration key you can add the appropriate action to your Jenkins project and supply it with the integration key. Be sure to select which job results you want to send an event to PagerDuty.
+
+NOTE - PagerDuty answers `success` / `Event processed` for any well-formed key, including one that does not belong to an integration. If the build log reports success but nothing shows up in PagerDuty, check the key and the integration type first.
 
 ---
 ## IMPORTANT!
 
 
- **There is a break in backwards compatibility between versions 4.x.x and 6.x.x**
+ **There is a break in backwards compatibility between versions 0.4.x and 0.6.x**
 
- if you are migrating from earlier versions to 6.x.x and above note the following changes:
+ if you are migrating from earlier versions to 0.6.x and above note the following changes:
 
 -    serviceKey is replaced with **routingKey**
 -    incidentKey is replaced with **dedupKey**
 -    incDescription/incDetails are replaced with **incidentSummary**
--    please note the new fields introduced starting version 6.x.x
+-    please note the new fields introduced starting version 0.6.x
 
 ---
 ### Pipeline
@@ -74,13 +81,33 @@ customDetails: [key1: "value1", ... , keyN: "valueN"])
 
 
 if resolve == false, pagerduty triggers an incident and returns the
-incidentKey
+dedup key. If you did not supply a `dedupKey`, PagerDuty generates one.
+
+if resolve == true, pagerduty resolves the incident with the given `dedupKey`:
+
+```
+def key = pagerduty(resolve: false, routingKey: "$ROUTING_KEY",
+    incidentSummary: "Deploy failed", incidentSource: "jenkins")
+// ...
+pagerduty(resolve: true, routingKey: "$ROUTING_KEY", dedupKey: key,
+    incidentSummary: "Deploy failed", incidentSource: "jenkins")
+```
+
+When `incidentSummary` and `incidentSource` are both set on a resolve, they are sent along with it.
+This matters if you use PagerDuty Event Orchestration rules that route on those fields.
 
 NOTE - To include Custom Details in the step, specify them via a Map as shown above.
 
 #### Change Events
 
 `pagerdutyChangeEvent(integrationKey: '$INTEGRATION_KEY')`
+
+Optional parameters are `summaryText` and `customDetails`. For this step `customDetails` is a JSON string, not a Map:
+
+```
+pagerdutyChangeEvent(integrationKey: '$INTEGRATION_KEY', summaryText: 'Deploy started',
+    customDetails: '{"version": "1.2.3"}')
+```
 
 #### PagerDuty Domain
 
@@ -93,6 +120,12 @@ pagerduty(routingKey: "$ROUTING_KEY", pagerDutyDomain: "events.eu.pagerduty.com"
 pagerdutyChangeEvent(integrationKey: '$INTEGRATION_KEY', pagerDutyDomain: 'events.eu.pagerduty.com')
 ```
 
+#### Proxy
+
+Incident trigger and resolve events are sent through the proxy configured in Jenkins
+(*Manage Jenkins* > *System* > *HTTP Proxy Configuration*), including the proxy user name and password.
+Change events do not use the Jenkins proxy configuration yet.
+
 ---
 You can choose one (or both) of the options to use PagerDuty
 
@@ -104,7 +137,12 @@ You can choose one (or both) of the options to use PagerDuty
 
 Using the "PagerDuty Incident Trigger" action, you can trigger or resolve incidents based on the results of a job.
 
-NOTE - To include Custom Details in the trigger, specify them via a JSON string in the textbox
+NOTE - To include Custom Details in the trigger, specify them as a JSON object in the textbox,
+for example `{"team": "ops", "build": "${BUILD_NUMBER}"}`. Environment variables and token macros are expanded.
+Leave the field empty to send no custom details.
+
+When the job goes back to normal, the incident is resolved using the same dedup key, summary and source
+as the trigger. Environment variables and token macros in those fields are expanded on resolve as well.
 
 ![trigger options](screen2.png)
 
@@ -140,7 +178,23 @@ shown below:
 
 ## Version History
 
-#### Version 7.0.0 (Mar 31, 2021)
+#### Version 0.8.0 (Nov 2026)
+(thanks [Johno Crawford](https://github.com/johnou), [Andre Cloutier](https://github.com/andrecloutier) and [Raghav Sai](https://github.com/petgoldfish)!)
+-   <<< **REQUIRES Jenkins 2.379 or newer and Java 11 or newer** >>>
+-   Replace the PagerDuty client library with the JDK HTTP client. Fixes the thread leak on repeated notifications (JENKINS-53214)
+-   Incident events honour the Jenkins proxy configuration, including proxy authentication
+-   Configurable PagerDuty domain (`pagerDutyDomain`) for all actions and steps
+-   Custom details for incident triggers, in freestyle jobs and in the `pagerduty` step (JENKINS-64892)
+-   Resolve events carry the incident summary and source, so Event Orchestration rules that route on them match (JENKINS-75964)
+-   Environment variables and token macros are expanded on resolve, so a dedup key with variables resolves the right incident (JENKINS-36482)
+-   Dependency updates (jackson-databind 2.18.11, commons-io 2.14.0, commons-lang3 3.18.0)
+
+#### Version 0.7.1 (Dec 15, 2022)
+-   Token macro support for the change event integration key
+-   Configuration form for the pipeline steps (JENKINS-68311)
+-   Additional trigger options in the `pagerduty` step
+
+#### Version 0.7.0 (Mar 31, 2021)
 (thanks [Bryan Bishop](https://github.com/bjbishop) and [Adam Krapfl](https://github.com/akrapfl)!)
 -   ChangeEvent custom summary text
 -   Support for tokenized strings in ChangeEvent 
